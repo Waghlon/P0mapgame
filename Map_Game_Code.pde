@@ -6,7 +6,7 @@ Below we initialize the variables and classes for the media.
 */
 
 void setup(){
-  size(400, 400);  //change the size
+  size(400, 400);  //change the size of penis
   background(255);
   
   //set framerate
