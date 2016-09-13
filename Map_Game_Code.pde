@@ -26,6 +26,10 @@ void draw(){
   
 }
 
+void keyPressed() {
+  
+}
+
   //DESIRED FUNCTIONALITY
   
   //graphic content
