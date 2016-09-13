@@ -5,7 +5,7 @@ Below we initialize the variables and classes for the media.
 
 */
 
-/*GREAAAAAT*/
+/*GREAAAAAT AND DICK*/
 void setup(){
   size(400, 400);  //change the size of penis
   background(255);
