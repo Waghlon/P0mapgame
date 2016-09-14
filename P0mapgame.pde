@@ -21,13 +21,17 @@ e.g. the Info zone (which needs to be a whole other code)
 As it is now the avatar (ball) has a starting which it returns to if the line it is on isn't black
 I don't think the program recognizes the colors of our poster, so having the poster between the road and the ball should be a problem
 Right now the road is missing, but I think I will play a bit with making a new road
+
+3.7
+
+Road in progress
 ###########################################
 */
 
 //Below we initialize the variables and classes for the media.
 
-int ballX = 200;
-int ballY = 500;
+int ballX = 100;
+int ballY = 725;
 int ballTester = 0;
 
 
@@ -48,11 +52,25 @@ void draw(){
   //check if the player is on the path
   //if yes, do not, if no, reset his position elsewhere
   
-   strokeWeight(40);
+   strokeWeight(30);
    stroke(0,0,0);
-beginShape();
+line(100,725,150,700);
+line(150,700,150,625);
+line(150,625,80,580);
+line(80,580,80,550);
+line(80,550,100,550);
+line(100,550,150,580);
+line(150,580,150,500);
+line(150,500,115,450);
+line(115,450,90,430);
+line(90,430,110,400);
+line(110,400,150,400);
+line(150,400,220,500);
+line(220,500,220,600);
+line(220,600,190,700);
+line(190,700,230,700);
 
-endShape();
+
 
   /*
   I suggest a loop of functions that goes like this:
@@ -88,8 +106,8 @@ if (mouseX > ballX-10 & mouseX < ballX+10 & mouseY < ballY+10 & mouseY > ballY-1
 if (get(ballX,ballY) != color(0,0,0)){
   println("BAD!");
   ballTester = 0;
-  ballX=200;
-  ballY=500;
+  ballX=100;
+  ballY=725;
 }
 else{
   println("good!");
