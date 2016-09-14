@@ -69,8 +69,10 @@ line(150,400,220,500);
 line(220,500,220,600);
 line(220,600,190,700);
 line(190,700,230,700);
-
-
+line(230,700,300,700);
+line(300,700,375,575);
+line(375,575,410,575);
+//line(410,575,
 
   /*
   I suggest a loop of functions that goes like this:
