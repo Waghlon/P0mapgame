@@ -2,8 +2,8 @@
 ###########################################
 P0 project - Map game
 
-Revision: 1
-Date: 13/09/2016
+Revision: 2
+Date: 14/09/2016
 By: Lars
 
 
@@ -19,58 +19,62 @@ Rules for good coding
 //Below we initialize the variables and classes for the media.
 
 
+
+
 void setup(){
   size(1086, 768); //closest approximation of A0. Works on all laptops
   frameRate(59); //standard screen refresh for most computer monitors. Might have to check again in case of other hardware
   background(255);
   //set drawing modes
   //load media
+  //draw static graphics, ie. graphics that are ALWAYS on the same location
 }
 
 void draw(){
   
-  //CURRENTLY ONLY USING FUNCTIONS 
-  //draw the dynamic graphic content
-  //animate obstacles
-  //control & collision
-  //player
-  //dynamic textbox
-  //end of game code
+  /*
+  I suggest a loop of functions that goes like this:
+  
+  player input and draw player
+  check if the player is on the path
+  move obstacles and draw obstacles
+  check for collisions
+  check for progress
+  draw rest of the graphics
+  
+  
+  */
+
   
 }
 
 
 
   //DESIRED FUNCTIONALITY
+
+    //player()
+  //constantly check for input
+  //move player and draw him at new location
+  //save coordinates into variables, in case we need them elsewhere
   
-  //dynamic graphic content
-  //load path, initialize the content of the dynamic textbox
-  //
+    
+    //path()
+  //draw/initialize some way of making sure where the path is 
+  //check if the player is on the path
+  //if yes, do not, if no, reset his position elsewhere
   
   
-  //obstacles
+    //obstacles()
   //draw obstacles
   //animate obstacles
   
-  //control & collision
-  //Load player character
-  //initialize control options
-  //initialize and set collision detection
   
-  //player
-  //constantly check for input
+    //collision()
   //constantly check for location for obsctacles and progress
-  //save progress to variables
   //code for respawning when you fail
   
-  //dynamic textbox
-  //check progress variables
-  //display the appropriate text for the current progress
-  //check the current skillset(?)
-  //draw text and media for the dynamic textbox
-  
-  
-  //end of game code
-  //some code to reset variables and player progress
-  
-  
+   
+   //progress()
+ //check if the player has gone far enough to trigger more info or end of game 
+ //if he has, draw info or similiar stuff
+ //draw something about the skillset
