@@ -2,9 +2,9 @@
 ###########################################
 P0 project - Map game
 
-Revision: 2
+Revision: 3
 Date: 14/09/2016
-By: Lars
+By: Andreas
 
 
 Rules for good coding
@@ -13,25 +13,46 @@ Rules for good coding
 3) Whenever you commit, update the revision number (just add one), date and name
 4) Please compile and test your code at least once, before committing it.
 
+Revision 3 notes
+I added the prototype Niklas made and deleted the thing we don't need anymore
+e.g. the Info zone (which needs to be a whole other code)
+
+As it is now the avatar (ball) has a starting which it returns to if the line it is on isn't black
+I don't think the program recognizes the colors of our poster, so having the poster between the road and the ball should be a problem
+Right now the road is missing, but I think I will play a bit with making a new road
 ###########################################
 */
 
 //Below we initialize the variables and classes for the media.
 
-
+int ballX = 200;
+int ballY = 500;
+int ballTester = 0;
 
 
 void setup(){
   size(1086, 768); //closest approximation of A0. Works on all laptops
   frameRate(59); //standard screen refresh for most computer monitors. Might have to check again in case of other hardware
-  background(255);
+
   //set drawing modes
   //load media
   //draw static graphics, ie. graphics that are ALWAYS on the same location
 }
 
 void draw(){
+  background(255);
+   
+    //path()
+  //draw/initialize some way of making sure where the path is 
+  //check if the player is on the path
+  //if yes, do not, if no, reset his position elsewhere
   
+   strokeWeight(40);
+   stroke(0,0,0);
+beginShape();
+
+endShape();
+
   /*
   I suggest a loop of functions that goes like this:
   
@@ -42,29 +63,54 @@ void draw(){
   check for progress
   draw rest of the graphics
   
-  
+  //ball that we must mess with
   */
-
-  
-}
-
-
-
-  //DESIRED FUNCTIONALITY
-
-    //player()
+      //player()
   //constantly check for input
   //move player and draw him at new location
   //save coordinates into variables, in case we need them elsewhere
   
-    
-    //path()
-  //draw/initialize some way of making sure where the path is 
-  //check if the player is on the path
-  //if yes, do not, if no, reset his position elsewhere
+strokeWeight(5);
+noFill();
+stroke(255,0,0);
+ellipse(ballX,ballY,20,20);
+
+//does the mouse hold the ball
+
+if (mouseX > ballX-10 & mouseX < ballX+10 & mouseY < ballY+10 & mouseY > ballY-10){
+  ballTester = 1;
+}
+
+
+//is the ball over the line?
+
+if (get(ballX,ballY) != color(0,0,0)){
+  println("BAD!");
+  ballTester = 0;
+  ballX=200;
+  ballY=500;
+}
+else{
+  println("good!");
+
+}
+
+//THIS SHOULD BE THE LAST THING THAT IS DONE!!!
+if (ballTester == 1){
+  ballX=mouseX;
+  ballY=mouseY;
+}
+   
   
+}
   
-    //obstacles()
+
+
+
+
+  //DESIRED FUNCTIONALITY
+  
+    //obstacles(depends on the time)
   //draw obstacles
   //animate obstacles
   
