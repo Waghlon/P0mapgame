@@ -1,6 +1,7 @@
 //<<<<<<< HEAD
 /*
 ###########################################
+//test by Juha hoping not to fuck it up
 P0 project - Map game
 
 Revision: 3
