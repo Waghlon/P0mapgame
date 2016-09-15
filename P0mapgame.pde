@@ -8,7 +8,6 @@ Revision: 3
 Date: 14/09/2016
 By: Andreas
 
-Test edit by Rasmus
 
 Rules for good coding
 1) Make sure to regularily comment your code
