@@ -2,9 +2,9 @@
 ###########################################
 P0 project - Map game
 
-Revision: 7
+Revision: 6
 Date: 16/09/2016
-By: group 13
+By: Niklas/Lars
 
 
 Rules for good coding
@@ -23,14 +23,14 @@ Squiggletest 2 now in effect
 
 int ballX = 70;
 int ballY = 870;
-int ballTester = 0;
+boolean ballTester = false;
 PImage below;
 PImage ontop;
 PImage verytop;
 
 void setup(){
   size(1414,1000);
-below = loadImage("below.png");
+below = loadImage("below1.png");
 ontop = loadImage("ontop.png");
 verytop = loadImage("verytop.png");
 }
@@ -40,14 +40,44 @@ void draw(){
    //shape of the path
 image(below, 0,0);
 
-//checks if the "below" is black
-if (get(mouseX,mouseY) != color(0,0,0)){
+//if the below is white then it resets the thing
+if(ballTester==true){
+if (get(mouseX,mouseY) == color(255,255,255)){
   println("BAD!");
-  ballTester = 0;
+  ballTester = false;
 }
-
+//Zones
+//put all the zone related codes within the specific area.
+if (get(mouseX,mouseY) == color(100,0,0)){
+println("User is in start area");
+}
+if (get(mouseX,mouseY) == color(150,0,0)){
+  println("User is in area #1");
+}
+if (get(mouseX,mouseY) == color(0,150,0)){
+  println("User is in area #2");
+}
+if (get(mouseX,mouseY) == color(0,0,150)){
+  println("User is in area #3");
+}
+if (get(mouseX,mouseY) == color(0,150,150)){
+println("User is in area #4");
+}
+if (get(mouseX,mouseY) == color(150,150,0)){
+  println("User is in area #5");
+}
+if (get(mouseX,mouseY) == color(150,0,150)){
+  println("User is in area #6");
+}
+if (get(mouseX,mouseY) == color(150,150,150)){
+  println("User is in area #7");
+}
+if (get(mouseX,mouseY) == color(0,0,100)){
+  println("User is in the end area");
+}
+}
 //Draws the avatar over the place 
-if (ballTester == 1){
+if (ballTester == true){
   ballX=mouseX;
   ballY=mouseY;
 }
@@ -71,11 +101,11 @@ ellipse(ballX,ballY,20,20);
 
 void mouseDragged(){
 if (mouseX > ballX-10 & mouseX < ballX+10 & mouseY < ballY+10 & mouseY > ballY-10){
-  ballTester = 1;
+  ballTester = true;
 }
 }
 void mouseReleased(){
-ballTester=0;
+ballTester=false;
 }
 
 
@@ -94,3 +124,12 @@ ballTester=0;
    //progress()
  //check if the player has gone far enough to trigger more info or end of game 
  //if he has, draw info or similiar stuff
+  //START(100,0,0)
+ //first zone(150,0,0)
+ //2ND(0,150,0)
+ //3RD(0,0,150)
+ //4TH(0,150,150)
+ //5TH(150,150,0)
+ //6TH(150,0,150)
+ //7TH(150,150,150)
+ //END(0,0,100)
