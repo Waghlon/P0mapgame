@@ -2,9 +2,9 @@
 ###########################################
 P0 project - Map game
 
-Revision: 6
+Revision: 7
 Date: 16/09/2016
-By: Niklas/Lars
+By: group 13
 
 
 Rules for good coding
@@ -21,8 +21,8 @@ Squiggletest 2 now in effect
 
 //Below we initialize the variables and classes for the media.
 
-int ballX = 80;
-int ballY = 850;
+int ballX = 70;
+int ballY = 870;
 int ballTester = 0;
 PImage below;
 PImage ontop;
