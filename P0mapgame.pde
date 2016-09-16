@@ -2,7 +2,7 @@
 ###########################################
 P0 project - Map game
 
-Revision: 4
+Revision: 5
 Date: 16/09/2016
 By: Niklas/Lars
 
@@ -38,14 +38,6 @@ void draw(){
    //shape of the path
 image(below, 0,0);
 
-
-//This checks if the mouse is over the ball - this should be in a mouse dragged void so that balltester is only enabled when it is dragged
-if (mouseX > ballX-10 & mouseX < ballX+10 & mouseY < ballY+10 & mouseY > ballY-10){
-  ballTester = 1;
-}
-
-
-
 //checks if the "below" is black
 if (get(mouseX,mouseY) != color(0,0,0)){
   println("BAD!");
@@ -67,6 +59,17 @@ noFill();
 stroke(255,0,0);
 ellipse(ballX,ballY,20,20);
   
+}
+
+//This checks if the mouse is dragging the ball. When mouse is released balltester is zeroed.
+
+void mouseDragged(){
+if (mouseX > ballX-10 & mouseX < ballX+10 & mouseY < ballY+10 & mouseY > ballY-10){
+  ballTester = 1;
+}
+}
+void mouseReleased(){
+ballTester=0;
 }
 
 
