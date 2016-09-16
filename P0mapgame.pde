@@ -23,8 +23,6 @@ As it is now the avatar (ball) has a starting which it returns to if the line it
 I don't think the program recognizes the colors of our poster, so having the poster between the road and the ball should be a problem
 Right now the road is missing, but I think I will play a bit with making a new road
 
-Test
-
 3.7
 
 Road in progress
