@@ -2,7 +2,7 @@
 ###########################################
 P0 project - Map game
 
-Revision: 6
+Revision: 5
 Date: 16/09/2016
 By: Niklas/Lars
 
@@ -21,18 +21,24 @@ Squiggletest 2 now in effect
 
 //Below we initialize the variables and classes for the media.
 
-int ballX = 70;
-int ballY = 870;
-boolean ballTester = false;
+int ballX = 80;
+int ballY = 850;
+int ballTester = 0;
 PImage below;
 PImage ontop;
-PImage verytop;
+PImage front;
+PImage back;
+PImage tLeft;
+PImage tRight;
 
 void setup(){
   size(1414,1000);
-below = loadImage("below1.png");
+below = loadImage("below.png");
 ontop = loadImage("ontop.png");
-verytop = loadImage("verytop.png");
+front = loadImage("front.png");
+back = loadImage("back.png");
+tLeft = loadImage("left.png");
+tRight = loadImage("right.png");
 }
 
 void draw(){
@@ -40,44 +46,14 @@ void draw(){
    //shape of the path
 image(below, 0,0);
 
-//if the below is white then it resets the thing
-if(ballTester==true){
-if (get(mouseX,mouseY) == color(255,255,255)){
+//checks if the "below" is black
+if (get(mouseX,mouseY) != color(0,0,0)){
   println("BAD!");
-  ballTester = false;
+  ballTester = 0;
 }
-//Zones
-//put all the zone related codes within the specific area.
-if (get(mouseX,mouseY) == color(100,0,0)){
-println("User is in start area");
-}
-if (get(mouseX,mouseY) == color(150,0,0)){
-  println("User is in area #1");
-}
-if (get(mouseX,mouseY) == color(0,150,0)){
-  println("User is in area #2");
-}
-if (get(mouseX,mouseY) == color(0,0,150)){
-  println("User is in area #3");
-}
-if (get(mouseX,mouseY) == color(0,150,150)){
-println("User is in area #4");
-}
-if (get(mouseX,mouseY) == color(150,150,0)){
-  println("User is in area #5");
-}
-if (get(mouseX,mouseY) == color(150,0,150)){
-  println("User is in area #6");
-}
-if (get(mouseX,mouseY) == color(150,150,150)){
-  println("User is in area #7");
-}
-if (get(mouseX,mouseY) == color(0,0,100)){
-  println("User is in the end area");
-}
-}
+
 //Draws the avatar over the place 
-if (ballTester == true){
+if (ballTester == 1){
   ballX=mouseX;
   ballY=mouseY;
 }
@@ -86,14 +62,20 @@ if (ballTester == true){
    
    
    //avatar is drawn with the 
-strokeWeight(5);
-noFill();
-stroke(255,0,0);
-ellipse(ballX,ballY,20,20);
- 
- //Layer that's ontop of everything that the ball travels behind
- image(verytop,0,0);
- 
+image(front, ballX-10, ballY-20, 20, 30);
+    
+  if (mouseY < pmouseY && ballX == mouseX && ballY == mouseY){
+  image(back, mouseX-10, mouseY-20, 20,30);
+}
+if (mouseY > pmouseY && ballX == mouseX && ballY == mouseY){
+  image(front, mouseX-10, mouseY-20, 20,30);
+}
+if (mouseX < pmouseX && ballX == mouseX && ballY == mouseY){
+  image(tLeft, mouseX-10, mouseY-20, 20,30);
+}
+if (mouseX > pmouseX && ballX == mouseX && ballY == mouseY){
+  image(tRight, mouseX-10, mouseY-20, 20,30);
+}
   
 }
 
@@ -101,11 +83,11 @@ ellipse(ballX,ballY,20,20);
 
 void mouseDragged(){
 if (mouseX > ballX-10 & mouseX < ballX+10 & mouseY < ballY+10 & mouseY > ballY-10){
-  ballTester = true;
+  ballTester = 1;
 }
 }
 void mouseReleased(){
-ballTester=false;
+ballTester=0;
 }
 
 
@@ -124,12 +106,3 @@ ballTester=false;
    //progress()
  //check if the player has gone far enough to trigger more info or end of game 
  //if he has, draw info or similiar stuff
-  //START(100,0,0)
- //first zone(150,0,0)
- //2ND(0,150,0)
- //3RD(0,0,150)
- //4TH(0,150,150)
- //5TH(150,150,0)
- //6TH(150,0,150)
- //7TH(150,150,150)
- //END(0,0,100)
