@@ -2,7 +2,7 @@
 ###########################################
 P0 project - Map game
 
-Revision: 5
+Revision: 6
 Date: 16/09/2016
 By: Niklas/Lars
 
@@ -26,11 +26,13 @@ int ballY = 850;
 int ballTester = 0;
 PImage below;
 PImage ontop;
+PImage verytop;
 
 void setup(){
   size(1414,1000);
 below = loadImage("below.png");
 ontop = loadImage("ontop.png");
+verytop = loadImage("verytop.png");
 }
 
 void draw(){
@@ -58,6 +60,10 @@ strokeWeight(5);
 noFill();
 stroke(255,0,0);
 ellipse(ballX,ballY,20,20);
+ 
+ //Layer that's ontop of everything that the ball travels behind
+ image(verytop,0,0);
+ 
   
 }
 
