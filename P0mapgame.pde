@@ -2,9 +2,9 @@
 ###########################################
 P0 project - Map game
 
-Revision: 5
+Revision: 7
 Date: 16/09/2016
-By: Niklas/Lars
+By: group 13
 
 
 Rules for good coding
@@ -24,8 +24,11 @@ Squiggletest 2 now in effect
 int ballX = 80;
 int ballY = 850;
 int ballTester = 0;
+int direction = 1;
+
 PImage below;
 PImage ontop;
+PImage verytop;
 PImage front;
 PImage back;
 PImage tLeft;
@@ -35,6 +38,7 @@ void setup(){
   size(1414,1000);
 below = loadImage("below.png");
 ontop = loadImage("ontop.png");
+verytop = loadImage("verytop.png");
 front = loadImage("front.png");
 back = loadImage("back.png");
 tLeft = loadImage("left.png");
@@ -62,21 +66,36 @@ if (ballTester == 1){
    
    
    //avatar is drawn with the 
-image(front, ballX-10, ballY-20, 20, 30);
-    
+   
+if (direction == 1){
+    image(front, ballX-10, ballY-20, 20,30);
+}
+if (direction == 2){
+  image(tRight, ballX-10, ballY-20, 20,30);
+}
+
+if(direction==3){
+  image(back,ballX-10, ballY-20, 20,30);
+}
+
+if(direction==4){
+  image(tLeft, ballX-10, ballY-20, 20,30);
+}
   if (mouseY < pmouseY && ballX == mouseX && ballY == mouseY){
-  image(back, mouseX-10, mouseY-20, 20,30);
+  direction=3;
 }
 if (mouseY > pmouseY && ballX == mouseX && ballY == mouseY){
-  image(front, mouseX-10, mouseY-20, 20,30);
+direction=1;
 }
 if (mouseX < pmouseX && ballX == mouseX && ballY == mouseY){
-  image(tLeft, mouseX-10, mouseY-20, 20,30);
+  direction=4;
 }
 if (mouseX > pmouseX && ballX == mouseX && ballY == mouseY){
-  image(tRight, mouseX-10, mouseY-20, 20,30);
+  direction=2;
 }
+  //image on TOPTOP - do this LAST
   
+  image(verytop,0,0);
 }
 
 //This checks if the mouse is dragging the ball. When mouse is released balltester is zeroed.
