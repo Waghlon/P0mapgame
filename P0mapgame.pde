@@ -2,9 +2,9 @@
 ###########################################
 P0 project - Map game
 
-Revision: 8
+Revision: 9
 Date: 16/09/2016
-By: Lars
+By: group 13
 
 
 Rules for good coding
@@ -38,11 +38,20 @@ PImage areaText7;
 PImage areaTextEnd;
 int zone=0;
 
+int direction = 1;
+PImage front;
+PImage back;
+PImage tLeft;
+PImage tRight;
+
 void setup(){
   size(1414,1000);
+  //background images
 below = loadImage("below1.png");
 ontop = loadImage("ontop.png");
 verytop = loadImage("verytop.png");
+
+//area and text images
 areaTextStart=loadImage("areaTextStart.png");//needs to be replaced with pictures of text that will be made in the close future. 
 areaText1=loadImage("placeholder2.png");//Couldve been done with a single PImage but that hinders the performance as it loads the image every frame.
 areaText2=loadImage("placeholder.png");
@@ -52,6 +61,12 @@ areaText5=loadImage("placeholder2.png");
 areaText6=loadImage("placeholder.png");
 areaText7=loadImage("placeholder2.png");
 areaTextEnd=loadImage("placeholder.png");
+
+//avatar images
+front = loadImage("front.png");
+back = loadImage("back.png");
+tLeft = loadImage("left.png");
+tRight = loadImage("right.png");
 
 }
 
@@ -143,11 +158,37 @@ if(zone==8){
 image(areaTextEnd,width/2-335,height/2-250);
 }
    
+
+   
+   
    //avatar is drawn with the 
-strokeWeight(5);
-noFill();
-stroke(255,0,0);
-ellipse(ballX,ballY,20,20);
+   
+if (direction == 1){
+    image(front, ballX-10, ballY-20, 20,30);
+}
+if (direction == 2){
+  image(tRight, ballX-10, ballY-20, 20,30);
+}
+
+if(direction==3){
+  image(back,ballX-10, ballY-20, 20,30);
+}
+
+if(direction==4){
+  image(tLeft, ballX-10, ballY-20, 20,30);
+}
+  if (mouseY < pmouseY && ballX == mouseX && ballY == mouseY){
+  direction=3;
+}
+if (mouseY > pmouseY && ballX == mouseX && ballY == mouseY){
+direction=1;
+}
+if (mouseX < pmouseX && ballX == mouseX && ballY == mouseY){
+  direction=4;
+}
+if (mouseX > pmouseX && ballX == mouseX && ballY == mouseY){
+  direction=2;
+}
  
  //Layer that's ontop of everything that the ball travels behind
  image(verytop,0,0);
