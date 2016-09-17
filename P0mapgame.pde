@@ -2,9 +2,9 @@
 ###########################################
 P0 project - Map game
 
-Revision: 6
+Revision: 8
 Date: 16/09/2016
-By: Niklas/Lars
+By: Lars
 
 
 Rules for good coding
@@ -13,9 +13,9 @@ Rules for good coding
 3) Whenever you commit, update the revision number (just add one), date and name
 4) Please compile and test your code at least once, before committing it.
 
-Revision 4 notes
+Revision 8 notes
 
-Squiggletest 2 now in effect
+Preliminary text graphics in. Textbox location updated on all images.
 ###########################################
 */
 
@@ -43,7 +43,7 @@ void setup(){
 below = loadImage("below1.png");
 ontop = loadImage("ontop.png");
 verytop = loadImage("verytop.png");
-areaTextStart=loadImage("placeholder.png");//needs to be replaced with pictures of text that will be made in the close future. 
+areaTextStart=loadImage("areaTextStart.png");//needs to be replaced with pictures of text that will be made in the close future. 
 areaText1=loadImage("placeholder2.png");//Couldve been done with a single PImage but that hinders the performance as it loads the image every frame.
 areaText2=loadImage("placeholder.png");
 areaText3=loadImage("placeholder2.png");
@@ -116,31 +116,31 @@ if (ballTester == true){
    image(ontop,0,0);
    //Text images for each zone that appear once the zone is entered
 if(zone==0){
-image(areaTextStart,width/2-100,height/2-150);
+image(areaTextStart,width/2-335,height/2-250);
 }
 if(zone==1){
-image(areaText1,width/2-100,height/2-150);
+image(areaText1,width/2-335,height/2-250);
 }
 if(zone==2){
-image(areaText2,width/2-100,height/2-150);
+image(areaText2,width/2-335,height/2-250);
 }
 if(zone==3){
-image(areaText3,width/2-100,height/2-150);
+image(areaText3,width/2-335,height/2-250);
 }
 if(zone==4){
-image(areaText4,width/2-100,height/2-150);
+image(areaText4,width/2-335,height/2-250);
 }
 if(zone==5){
-image(areaText5,width/2-100,height/2-150);
+image(areaText5,width/2-335,height/2-250);
 }
 if(zone==6){
-image(areaText6,width/2-100,height/2-150);
+image(areaText6,width/2-335,height/2-250);
 }
 if(zone==7){
-image(areaText7,width/2-100,height/2-150);
+image(areaText7,width/2-335,height/2-250);
 }
 if(zone==8){
-image(areaTextEnd,width/2-100,height/2-150);
+image(areaTextEnd,width/2-335,height/2-250);
 }
    
    //avatar is drawn with the 
@@ -167,18 +167,8 @@ ballTester=false;
 }
 
 
-  //DESIRED FUNCTIONALITY
+  //DESIRED EXTRAS
   
     //obstacles(depends on the time)
   //draw obstacles
   //animate obstacles
-  
-  
-    //collision()
-  //constantly check for location for obsctacles and progress
-  //code for respawning when you fail
-  
-   
-   //progress()
- //check if the player has gone far enough to trigger more info or end of game 
- //if he has, draw info or similiar stuff
