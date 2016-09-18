@@ -53,7 +53,7 @@ verytop = loadImage("verytop.png");
 
 //area and text images
 areaTextStart=loadImage("areaTextStart.png");//needs to be replaced with pictures of text that will be made in the close future. 
-areaText1=loadImage("areaText1.png");//Couldve been done with a single PImage but that hinders the performance as it loads the image every frame.
+areaText1=loadImage("placeholder2.png");//Couldve been done with a single PImage but that hinders the performance as it loads the image every frame.
 areaText2=loadImage("placeholder.png");
 areaText3=loadImage("placeholder2.png");
 areaText4=loadImage("placeholder.png");
