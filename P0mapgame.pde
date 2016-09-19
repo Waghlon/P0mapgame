@@ -1,20 +1,15 @@
 /*
 ###########################################
 P0 project - Map game
-
 Revision: 10
 Date: 19/09/2016
 By: group 13
-
-
 Rules for good coding
 1) Make sure to regularily comment your code
 2) Before you edit any section, make sure to talk to Lars and/or whoever is near you first.
 3) Whenever you commit, update the revision number (just add one), date and name
 4) Please compile and test your code at least once, before committing it.
-
 Revision 10 notes
-
 Changed the method of loading in an drawing the zone text images to using an array.
 ###########################################
 */
@@ -62,7 +57,7 @@ boolean hide=true;
 boolean hide2=true;
 //                                                                                            end of code added by robert
 int zone=0;//zone variable to determine which zone you are in
-int direction = 1;//direction variable to detect which direction the character is going in
+int direction = 2;//direction variable to detect which direction the character is going in
 PImage front;
 PImage back;
 PImage tLeft;
@@ -71,6 +66,12 @@ PImage tRight;
 //This array will hold all the text images for the different zones
 int numberOfZones = 9;
 PImage[] areaTextArray = new PImage[numberOfZones];
+
+//stuff to do with score and ending
+int time;
+int score=0;
+int countdown;
+int confetti;
 
 void setup(){
   
@@ -115,8 +116,8 @@ placeholder3=loadImage("placeholder3.png");
   tLeft = loadImage("left.png");
   tRight = loadImage("right.png");
   
-  ballX = 130;
-  ballY = 630;
+  ballX = 70;
+  ballY = 870;
   
   
 }
@@ -268,6 +269,8 @@ if (mouseX < pmouseX && ballX == mouseX && ballY == mouseY){
 if (mouseX > pmouseX && ballX == mouseX && ballY == mouseY){
   direction=2;
 }
+
+
  
  //Layer that's ontop of everything that the ball travels behind
  image(verytop,0,0);
@@ -276,6 +279,56 @@ image(button,70,550);
 if(hide==false){
 image(placeholder3,width/2-335,height/2-250);
 hide2=false;
+}
+
+ //Wins the game ... change mouseX to ballX!!!!!!!
+if(ballX > 1358){ 
+
+    direction=5;
+  if (score==0){
+      confetti=1;
+  score=(millis()-time)/50;
+  countdown=second();
+  }
+  
+
+ 
+  fill(0,0,0,100);
+  rect(0,0,width,height);
+  
+  
+  //CONFETTI - should maybe be deleted?!
+   if (confetti>0){
+   noStroke();
+
+     int linespace=1;
+for (int i = 1; i < confetti; i = i+15) {
+linespace++;
+  for (int j = 0; j < 1400; j = j+15) {
+       fill(255,0,0);
+    rect((linespace*20)+j, 20+i, 10,10);
+  }
+  if(linespace>1)
+  linespace=0;
+}
+ }
+ confetti++;
+  
+  //You won text!
+  textAlign(CENTER);
+  textSize(40);
+  fill(255,255,255);
+text("CONGRATULATIONS!", width/2, height/2); 
+textSize(20);
+text("You have succesfully navigated Medialogy and completed with a score of "+score, width/2, height/2+40); 
+if (second()-countdown>3){
+  //Reset
+  direction=2;
+  ballTester=false;
+ ballX = 70;
+ballY = 870;
+confetti=0;
+}
 }
   
 }
