@@ -15,80 +15,52 @@ Changed the method of loading in an drawing the zone text images to using an arr
 */
 
 //Below we initialize the variables and classes for the media.
-
-int ballX;
-int ballY;
-boolean ballTester = false;
-PImage below;
-PImage ontop;
-PImage verytop;
-int currentZone;
-String imageName = "areaTextImage";
-//                                                                          Start of code added by Robert
-//booleans for acquiring each skill
-boolean skill1act=false;
-boolean skill2act=false;
-boolean skill3act=false;
-boolean skill4act=false;
-boolean skill5act=false;
-boolean skill6act=false;
-boolean skill7act=false;
-//images for active skills
-PImage skill1a;
-PImage skill2a;
-PImage skill3a;
-PImage skill4a;
-PImage skill5a;
-PImage skill6a;
-PImage skill7a;
-//images for inactive skills
-PImage skill1i;
-PImage skill2i;
-PImage skill3i;
-PImage skill4i;
-PImage skill5i;
-PImage skill6i;
-PImage skill7i;
-PImage button;
-//buttons and inactive skills can be implemented into ontop image
-PImage placeholder3;
-//check whether it is the second time the user has clicked the thing to close the information
-boolean hide=true;
-boolean hide2=true;
-//                                                                                            end of code added by robert
-int zone=0;//zone variable to determine which zone you are in
-int direction = 2;//direction variable to detect which direction the character is going in
-PImage front;
-PImage back;
-PImage tLeft;
-PImage tRight;
-
+//************INTEGERS*************
+int ballX, ballY, currentZone, direction, numberOfZones, time, score, countdown, confetti;
+  //ballX and ballY represent characters coordinates
+  //currentZone variable to determine which zone you are in  
+  //direction variable to detect which direction the character is going in
+  //numberOfZones is used for the picture array
+  //time, score, countdown and confetti are variables used for the ending
+//************PIMAGES*************
+PImage[] areaTextArray;
 //This array will hold all the text images for the different zones
-int numberOfZones = 9;
-PImage[] areaTextArray = new PImage[numberOfZones];
-
-//stuff to do with score and ending
-int time;
-int score=0;
-int countdown;
-int confetti;
+PImage below, ontop, verytop;//images for below layer used to detect zones, and ontop and verytop for graphics
+PImage skill1a,skill2a,skill3a,skill4a,skill5a,skill6a,skill7a;//images of active skills
+PImage skill1i,skill2i,skill3i,skill4i,skill5i,skill6i,skill7i;//images of inactive skills
+PImage placeholder3,button;//images for button and the text it shows
+PImage front,back,tLeft,tRight;//character direction images
+//************BOOLEANS*************
+boolean skill1act, skill2act, skill3act, skill4act, skill5act, skill6act, skill7act,hide,hide2,ballTester;
+  //skill activation booleans, hide and hide2 used to have a properly working button, ballTester to determine whether the character is being held
+//************OTHERS*************
+String imageName;//used for an array
 
 void setup(){
-  
   size(1414,1000);
+  //defining the variables
+ballX = 70;
+ballY = 870;
+skill1act=false;
+skill2act=false;
+skill3act=false;
+skill4act=false;
+skill5act=false;
+skill6act=false;
+skill7act=false;
+hide=true;
+hide2=true;
+direction=2;
+score=0;
+numberOfZones=9;
+areaTextArray = new PImage[numberOfZones];
+ballTester=false;
+imageName = "areaTextImage";
   //background images
-  below = loadImage("below1.png");
-  ontop = loadImage("ontop.png");
-  verytop = loadImage("verytop.png");
-  
-  //Load in the images of the text for the different areas, and put them into an array
-  for (int i = 0; i < numberOfZones; i++) {
-    areaTextArray[i] = loadImage(imageName + i +".png");
-  }
-  
-  //area and text images
-//                                                            start of the code added by robert
-//inactive skills(need replacements)
+below = loadImage("below1.png");
+ontop = loadImage("ontop.png");
+verytop = loadImage("verytop.png");
+  //inactive skills(need replacements)
 skill1i=loadImage("skilli.png");
 skill2i=loadImage("skilli.png");
 skill3i=loadImage("skilli.png");
@@ -96,7 +68,7 @@ skill4i=loadImage("skilli.png");
 skill5i=loadImage("skilli.png");
 skill6i=loadImage("skilli.png");
 skill7i=loadImage("skilli.png");
-//active skills(need replacements)
+  //active skills(need replacements)
 skill1a=loadImage("skilla.png");
 skill2a=loadImage("skilla.png");
 skill3a=loadImage("skilla.png");
@@ -104,21 +76,21 @@ skill4a=loadImage("skilla.png");
 skill5a=loadImage("skilla.png");
 skill6a=loadImage("skilla.png");
 skill7a=loadImage("skilla.png");
-//button and its text
+  //button and its text
 button=loadImage("button.png");
 button.resize(50,50);
 placeholder3=loadImage("placeholder3.png");
-//                                                            end of the code added by robert
-  
   //avatar images
-  front = loadImage("front.png");
-  back = loadImage("back.png");
-  tLeft = loadImage("left.png");
-  tRight = loadImage("right.png");
+front = loadImage("front.png");
+back = loadImage("back.png");
+tLeft = loadImage("left.png");
+tRight = loadImage("right.png");  
+
   
-  ballX = 70;
-  ballY = 870;
-  
+//Load in the images of the text for the different areas, and put them into an array
+for (int i = 0; i < numberOfZones; i++) {
+areaTextArray[i] = loadImage(imageName + i +".png");
+} 
   
 }
 
@@ -323,11 +295,7 @@ textSize(20);
 text("You have succesfully navigated Medialogy and completed with a score of "+score, width/2, height/2+40); 
 if (second()-countdown>3){
   //Reset
-  direction=2;
-  ballTester=false;
- ballX = 70;
-ballY = 870;
-confetti=0;
+setup();
 }
 }
   
