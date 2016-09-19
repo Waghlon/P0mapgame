@@ -147,10 +147,26 @@ if (get(mouseX,mouseY) == color(150,150,150)){
   currentZone=7;
 skill6act=true;
 }
-if (get(mouseX,mouseY) == color(0,0,100)){
-  println("User is in the end area");
+if (get(mouseX,mouseY) == color(50,50,0)){
+  println("User is on the job path");
   currentZone=8;
 skill7act=true;
+}
+if (get(mouseX,mouseY) == color(50,0,0)){
+  println("User is in the first job area");
+  currentZone=9;
+}
+if (get(mouseX,mouseY) == color(0,50,0)){
+  println("User is in the second job area");
+  currentZone=9;
+}
+if (get(mouseX,mouseY) == color(0,0,50)){
+  println("User is in the third job area");
+  currentZone=10;
+}
+if (get(mouseX,mouseY) == color(50,50,50)){
+  println("User is in the fourth job area");
+  currentZone=11;
 }
 }
 //Draws the avatar over the place 
@@ -285,7 +301,6 @@ linespace++;
 }
  }
  confetti++;
-  
   //You won text!
   textAlign(CENTER);
   textSize(40);
@@ -295,7 +310,23 @@ textSize(20);
 text("You have succesfully navigated Medialogy and completed with a score of "+score, width/2, height/2+40); 
 if (second()-countdown>3){
   //Reset
-setup();
+  //resetting all the variables to the beginning ones
+ballX = 70;
+ballY = 870;
+skill1act=false;
+skill2act=false;
+skill3act=false;
+skill4act=false;
+skill5act=false;
+skill6act=false;
+skill7act=false;
+hide=true;
+hide2=true;
+direction=2;
+score=0;
+numberOfZones=9;
+areaTextArray = new PImage[numberOfZones];
+ballTester=false;
 }
 }
   
