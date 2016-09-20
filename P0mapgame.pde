@@ -23,34 +23,46 @@ Added attributes. They are set at random to begin with, and increase randomly ea
 ###########################################
 */
 
-//Below we initialize the variables and classes for the media.
-//************INTEGERS*************
-int ballX, ballY, currentZone, direction, numberOfZones, time, score, countdown, confetti, skillBookPosX, skillBookPosY, numberOfSkills, numberOfAttributes, skillsUnlocked, iconSize, bookFontSize, zoneTitleFontSize, zoneTextFontSize, avatarToShow;
-  //ballX and ballY represent characters coordinates
-  //currentZone variable to determine which zone you are in  
-  //direction variable to detect which direction the character is going in
-  //numberOfZones is used for the picture array
-  //time, score, countdown and confetti are variables used for the ending
-//************PIMAGES*************
-//This array will hold all the text images for the different zones
-PImage below, ontop, verytop;//images for below layer used to detect zones, and ontop and verytop for graphics
-PImage placeholder3,button;//images for button and the text it shows
-PImage skillBook;
-PImage[] skillIconsActive, skillIconsNotActive, avatarImages;
-//************BOOLEANS*************
-boolean hide,hide2,ballTester;
-//hide and hide2 used to have a properly working button, ballTester to determine whether the character is being held
-//************OTHERS*************
-String[] skillNames, zoneText, zoneTitle, attributeNames;
-PFont fontKeepCalm;
+//*******************************************//
+//*********// Declaring Variables //*********//
+//*******************************************//  
+  
+//************ Avatar Variables *************//
+int ballX, ballY, currentZone, direction, hideAvatar, showIconAtAvatar;    //ballX and ballY represent characters coordinates, currentZone variable to determine which zone you are in 
+boolean ballTester;                          //ballTester to determine whether the character is being held
+PImage below, ontop, verytop;                //images for below layer used to detect zones, and ontop and verytop for graphics
+PImage[] avatarImages;
+float timer, savedTime, iconTimer, iconTimerSaved;
+
+//************ Zone Text Variables *************//
+int zoneTitleFontSize, zoneTextFontSize, numberOfZones;
+String[] zoneText, zoneTitle;
+
+//************ Skillbook Variables *************//
+int skillBookPosX, skillBookPosY, numberOfSkills, numberOfAttributes, skillsUnlocked, iconSize, bookFontSize;
 int[] attributePoints;
-float timer;
-float savedTime;
+PImage skillBook, bookDrawing01, bookDrawing02;
+PImage[] skillIconsActive, skillIconsNotActive;
+String[] skillNames, attributeNames;
+
+//************ Button Variables *************//
+boolean hide,hide2;                         //hide and hide2 used to have a properly working button
+PImage placeholder3,button;                 //images for button and the text it shows
+
+//************ Game Completion Variables *************//
+int time, score, countdown, confetti;        //time, score, countdown and confetti are variables used for the ending
+  
+//************ Fonts *************//
+PFont fontKeepCalm;
+
+//************ Title *************//
+PImage titleImage;
 
 
 void setup(){
   
   size(1414, 1000, P3D);
+  smooth(8);
   
   //*********// Avatar Variables //*********//
   ballX = 70;
@@ -81,11 +93,13 @@ void setup(){
   
   
   //*********// Skill Book Setup //***********//  
-  skillBook = loadImage("Skillbook.png");
+  skillBook = loadImage("skillbook/skillbookImage.png");
   skillBook.resize(450,0);
   skillBookPosX = 960;
   skillBookPosY = 10;  
-
+  
+  bookDrawing01 = loadImage("skillbook/bookDrawing01.png");
+  bookDrawing02 = loadImage("skillbook/bookDrawing02.png");
   skillNames = loadStrings("strings/skillNameStrings.txt");
   attributeNames = loadStrings("strings/attributeNames.txt");
   numberOfSkills = skillNames.length;
@@ -93,8 +107,8 @@ void setup(){
   skillIconsActive = new PImage[numberOfSkills];
   skillIconsNotActive = new PImage[numberOfSkills];
   fontKeepCalm = loadFont("fonts/keepCalm.vlw");
-  iconSize = 25;
-  bookFontSize = 16;  
+  iconSize = 20;
+  bookFontSize = 14;  
   
   attributePoints = new int[numberOfAttributes];
     
@@ -102,14 +116,14 @@ void setup(){
   //The spaces are removed with replaceAll(" ", "")
   //The inactive skill icons are turned grayscale using filter(GRAY)
   for (int i = 0; i < numberOfSkills; i++) {
-    skillIconsActive[i] = loadImage("icons/" + skillNames[i].replaceAll(" ", "") +".png");
-    skillIconsNotActive[i] = loadImage("icons/" + skillNames[i].replaceAll(" ", "") +".png");
+    skillIconsActive[i] = loadImage("skillbook/icons/" + skillNames[i].replaceAll(" ", "") +".png");
+    skillIconsNotActive[i] = loadImage("skillbook/icons/" + skillNames[i].replaceAll(" ", "") +".png");
     skillIconsNotActive[i].filter(GRAY);
   } 
   
   //Assign random attribute levels
   for (int i = 0; i < numberOfAttributes; i++) {
-    attributePoints[i] = int(random(1,10));
+    attributePoints[i] = int(random(1,7));
   } 
 
 
@@ -128,6 +142,8 @@ void setup(){
   avatarImages[2] = loadImage("avatar/back.png");
   avatarImages[3] = loadImage("avatar/left.png");  
  
+ 
+  titleImage = loadImage("titleImage.png");
 
 }
 
@@ -205,21 +221,18 @@ void draw(){
   //Unlock the next skill if you've entered a zone you haven't been in yet
   if (skillsUnlocked < currentZone - 1 && skillsUnlocked < numberOfSkills) {
     skillsUnlocked++;
+    showIconAtAvatar = 1;
+    iconTimerSaved = millis();
     
      //Add a random number of attribute points
      for (int i = 0; i < numberOfAttributes; i++) {
-     attributePoints[i] += int(random(0,3));
+       attributePoints[i] += int(random(0,4));
+       attributePoints[i] = constrain(attributePoints[i], 0,11);
      } 
   
   }
   
-  //Draws the avatar over the place 
-  if (ballTester == true){
-    ballX=mouseX;
-    ballY=mouseY;
-  }
-  
-  
+ 
    //image on top
    image(ontop,0,0);
 
@@ -236,26 +249,37 @@ void draw(){
 
    //****************// Draw the Avatar //****************//
    
-   //Determine the direction the avatar should be facing, but only once every 1/10th of a second
-   timer = (millis() - savedTime)/1000;
-   if (timer > 0.1) {     
-     
-      if (mouseY < pmouseY && ballX == mouseX && ballY == mouseY){
-        direction=2;
-      } else if (mouseY > pmouseY && ballX == mouseX && ballY == mouseY){
-      direction=0;
-      } else if (mouseX < pmouseX && ballX == mouseX && ballY == mouseY){
-        direction=3;
-      } else if (mouseX > pmouseX && ballX == mouseX && ballY == mouseY){
-        direction=1;
-      }      
-      //Reset the timer
-      savedTime = millis();    
-   }
-     
+  //Draws the avatar over the place 
+  if (ballTester == true){
+    ballX=mouseX;
+    ballY=mouseY;
+  }
+  
+  timer = (millis() - savedTime)/1000;
+  
+  if (hideAvatar != 1) {
+    
+  //Determine the direction the avatar should be facing, but only once every 1/10th of a second
+  if (timer > 0.1) {  
+    if (mouseY < pmouseY && ballX == mouseX && ballY == mouseY){
+      direction=2;
+    } else if (mouseY > pmouseY && ballX == mouseX && ballY == mouseY){
+    direction=0;
+    } else if (mouseX < pmouseX && ballX == mouseX && ballY == mouseY){
+      direction=3;
+    } else if (mouseX > pmouseX && ballX == mouseX && ballY == mouseY){
+      direction=1;
+    }      
+    //Reset the timer
+    savedTime = millis();    
+  }
+         
   //Draw the Avatar
   image(avatarImages[direction], ballX-10, ballY-20, 20,30);
   
+  iconTimer = (millis() - iconTimerSaved)/1000;
+  
+ 
 
   //****************// Draw the top most layers //****************//
 
@@ -263,13 +287,39 @@ void draw(){
   image(verytop,0,0);
   
   //draws a button(can be deleted if we implement buttons into ontop image
-  image(button,70,550);
+  /*image(button,70,550);
   if(hide==false){
-  image(placeholder3,width/2-335,height/2-250);
-  hide2=false;
+    image(placeholder3,width/2-335,height/2-250);
+    hide2=false;
   }
+*/
 
-
+  //****************// Draw the icon of the skill recently acquired //****************//
+  if (showIconAtAvatar == 1 && iconTimer <= 2.5) {
+    
+    float fadeIn;
+    
+    if (iconTimer < 1) {
+      fadeIn = constrain(iconTimer*4, 0, 1);
+    } else {
+      fadeIn = constrain((2.5 - iconTimer)*4, 0, 1);
+    }
+    
+    tint(255,255*fadeIn);
+    fill(230,230,230,255*fadeIn);
+    stroke(0, 255*fadeIn);
+    rect(ballX - 25, ballY - 55, 210, 35);
+    image(skillIconsActive[skillsUnlocked - 1], ballX - 15, ballY - 50, iconSize, iconSize);
+    textFont(fontKeepCalm, 22);
+    fill(0,0,0,255*fadeIn);
+    text("Skill Aqcuired", ballX + 15, ballY - 30);
+    noTint();
+    } else if (showIconAtAvatar == 1 && iconTimer > 2){
+    showIconAtAvatar = 0;
+    }
+    
+  }
+  
   //****************// Draw the Skillbook //********************//
 
   image(skillBook, skillBookPosX, skillBookPosY);
@@ -279,35 +329,50 @@ void draw(){
   
   //Get ready for drawing the skills
   textFont(fontKeepCalm, bookFontSize);
-  int spaceBetweenSkills = 30;
+  int spaceBetweenSkills = 25;
   
   //Draw the icons and text for the inactive skills. "i" starts at skillsUnlocked. That way, it doesnt draw the skills that have been activated, and will be drawn by the next for loop.
   for (int i = skillsUnlocked; i < numberOfSkills; i++) {
-    fill(120,120,120);
+    fill(75,75,75,175);
     tint(255, 165);
-    image(skillIconsNotActive[i], skillBookPosX + 40, skillBookPosY + 60 +  + spaceBetweenSkills*i, iconSize, iconSize);
+    image(skillIconsNotActive[i], skillBookPosX + 45, skillBookPosY + 64 +  + spaceBetweenSkills*i, iconSize, iconSize);
     text(skillNames[i], skillBookPosX + 70, skillBookPosY + 80 +  + spaceBetweenSkills*i);
     noTint();
   } 
   
   //Draw the icons and text for the active skills
   for (int i = 0; i < skillsUnlocked; i++) {
-    fill(0,0,0);
-    image(skillIconsActive[i], skillBookPosX + 40, skillBookPosY + 60 +  + spaceBetweenSkills*i, iconSize, iconSize);
+    fill(0,0,0,255);
+    image(skillIconsActive[i], skillBookPosX + 45, skillBookPosY + 64 +  + spaceBetweenSkills*i, iconSize, iconSize);
     text(skillNames[i], skillBookPosX + 70, skillBookPosY + 80 +  + spaceBetweenSkills*i);
   } 
   
   //Draw the attributes
   for (int i = 0; i < numberOfAttributes; i++) {
     fill(0,0,0);
-    text(attributeNames[i] + ": " + attributePoints[i], skillBookPosX + 250, skillBookPosY + 80 +  + spaceBetweenSkills*i);
+    text(attributeNames[i] + ": " + attributePoints[i], skillBookPosX + 255, skillBookPosY + 80 +  + spaceBetweenSkills*i);
   } 
-
+  
+  //Draw the drawings, lol
+  tint(255, 200);
+  image(bookDrawing01, skillBookPosX + 20, skillBookPosY + 215);
+  image(bookDrawing02, skillBookPosX + 240, skillBookPosY + 225);
+  noTint();
+  
+  //***************// Draw the title of the damn game! //******************//
+  
+  //textFont(fontKeepCalm, 48);
+  //fill(220,70,46, 210);
+  //1text("Journey of Medialogy", 85, 170);
+  titleImage.resize(650,0);
+  image(titleImage, 70, 120);
 
   //***************// End of Game Stuff //******************//
 
    //Wins the game ... change mouseX to ballX!!!!!!!
   if(ballX > 1358){ 
+    
+    hideAvatar = 1;
   
       direction=1;
     if (score==0){
@@ -337,28 +402,34 @@ void draw(){
     linespace=0;
   }
    }
-   confetti++;
-    //You won text!
-    textAlign(CENTER);
-    textSize(40);
-    fill(255,255,255);
-  text("CONGRATULATIONS!", width/2, height/2); 
-  textSize(20);
-  text("You have succesfully navigated Medialogy and completed with a score of "+score, width/2, height/2+40);
-  textAlign(LEFT);
-  if (millis()-countdown>3000){
-    //Reset
-    //resetting all the variables to the beginning ones
-  ballX = 70;
-  ballY = 870;
-  
-  hide=true;
-  hide2=true;
-  direction=2;
-  score=0;
-  ballTester=false;
-  currentZone=0;
-  skillsUnlocked = 0;
+     confetti++;
+      //You won text!
+      textAlign(CENTER);
+      textSize(40);
+      fill(255,255,255);
+    text("CONGRATULATIONS!", width/2, height/2); 
+    textSize(20);
+    text("You have succesfully navigated Medialogy and completed with a score of "+score, width/2, height/2+40);
+    textAlign(LEFT);
+    if (millis()-countdown > 5000){
+      //Reset
+      //resetting all the variables to the beginning ones
+    ballX = 70;
+    ballY = 870;
+    
+    hide=true;
+    hide2=true;
+    direction=2;
+    score=0;
+    ballTester=false;
+    currentZone=0;
+    skillsUnlocked = 0;
+    hideAvatar = 0;
+    
+      //Assign random attribute levels
+    for (int i = 0; i < numberOfAttributes; i++) {
+      attributePoints[i] = int(random(1,9));
+    } 
   }
   }
 }
