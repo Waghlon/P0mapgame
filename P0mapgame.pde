@@ -104,12 +104,13 @@ void setup(){
   skillBookPosX = 960;
   skillBookPosY = 10;  
   
-  skillDataTable = loadTable("strings/skillData.txt", "header, tsv");
-  
+  //Load in the images
   bookDrawing01 = loadImage("skillbook/bookDrawing01.png");
   bookDrawing02 = loadImage("skillbook/bookDrawing02.png");
+  
+  //Load in the Skill text strings
+  skillDataTable = loadTable("strings/skillData.txt", "header, tsv");
   numberOfSkills = skillDataTable.getRowCount();
-  skillDescrActive = 0;
   skillIconPosX = new int[numberOfSkills];
   skillIconPosY = new int[numberOfSkills];
   skillIconsActive = new PImage[numberOfSkills];
@@ -128,7 +129,7 @@ void setup(){
   //Determine the position of the icons. We store these valules in an array, both for optimization, but also so that we can monitor if the mouse is on top of one of them
   for (int i = 0; i < numberOfSkills; i++) {
     skillIconPosX[i] = skillBookPosX + 45;
-    skillIconPosY[i] = skillBookPosY + 64 + spaceBetweenSkills*i;
+    skillIconPosY[i] = skillBookPosY + 56 + spaceBetweenSkills*i;
   } 
 
   
@@ -321,11 +322,11 @@ void draw(){
     tint(255,255*fadeIn);
     fill(230,230,230,255*fadeIn);
     stroke(0, 255*fadeIn);
-    rect(avatarPosX - 25, avatarPosY - 55, 210, 35);
+    rect(avatarPosX - 25, avatarPosY - 55, 160, 30);
     image(skillIconsActive[skillsUnlocked - 1], avatarPosX - 15, avatarPosY - 50, iconSize, iconSize);
-    textFont(fontKeepCalm, 22);
+    textFont(fontRoboto, 18);
     fill(0,0,0,255*fadeIn);
-    text("Skill Acquired", avatarPosX + 15, avatarPosY - 30);
+    text("Skill Acquired", avatarPosX + 15, avatarPosY - 34);
     noTint();
     } else if (showIconAtAvatar == 1 && iconTimer > 2){
     showIconAtAvatar = 0;
@@ -343,16 +344,16 @@ void draw(){
   text("Skills", skillBookPosX + 45, skillBookPosY + 50);
   
   //Draw the shape that shows which skills is being described on the right page
-  fill(255,255,255,85);
-  stroke(0,120);
+  fill(0,0,0,125);
+  stroke(0,150);
   beginShape();
   vertex(skillIconPosX[skillDescrActive] - 5, skillIconPosY[skillDescrActive] - 3);
   vertex(skillIconPosX[skillDescrActive] - 5, skillIconPosY[skillDescrActive] + iconSize + 3);
   vertex(skillIconPosX[skillDescrActive] + 195, skillIconPosY[skillDescrActive] + iconSize + 3);
-  vertex(skillIconPosX[skillDescrActive] + 195, skillIconPosY[0] + 250);
-  vertex(skillIconPosX[skillDescrActive] + 390, skillIconPosY[0] + 250);
-  vertex(skillIconPosX[skillDescrActive] + 390, skillIconPosY[0] - 10);
-  vertex(skillIconPosX[skillDescrActive] + 195, skillIconPosY[0] - 10);
+  vertex(skillIconPosX[skillDescrActive] + 195, skillIconPosY[0] + 270);
+  vertex(skillIconPosX[skillDescrActive] + 385, skillIconPosY[0] + 270);
+  vertex(skillIconPosX[skillDescrActive] + 385, skillIconPosY[0] - 35);
+  vertex(skillIconPosX[skillDescrActive] + 195, skillIconPosY[0] - 35);
   vertex(skillIconPosX[skillDescrActive] + 195, skillIconPosY[skillDescrActive] - 3);
   vertex(skillIconPosX[skillDescrActive] - 5, skillIconPosY[skillDescrActive] - 3);
   endShape();
@@ -362,7 +363,14 @@ void draw(){
   
   //Draw the icons and text for the inactive skills. "i" starts at skillsUnlocked. That way, it doesnt draw the skills that have been activated, and will be drawn by the next for loop.
   for (int i = skillsUnlocked; i < numberOfSkills; i++) {
-    fill(35,35,35,200);
+    
+    //If the skill is the one being described right now, make the text white. If not make it black.
+    if (i == skillDescrActive) {
+      fill(255,255,255,235);
+    } else { 
+      fill(35,35,35,200);
+    }
+    
     tint(255, 195);
     image(skillIconsNotActive[i], skillIconPosX[i], skillIconPosY[i], iconSize, iconSize);
     text(skillDataTable.getString(i,"Skill Names"), skillIconPosX[i] + 25, skillIconPosY[i] + 16);
@@ -371,20 +379,27 @@ void draw(){
   
   //Draw the icons and text for the active skills
   for (int i = 0; i < skillsUnlocked; i++) {
-    fill(0,0,0,255);
+    
+    //If the skill is the one being described right now, make the text white. If not make it black.
+    if (i == skillDescrActive) {
+      fill(255,255,255,255);
+    } else { 
+      fill(0,0,0,255);
+    }
+    
     image(skillIconsActive[i], skillIconPosX[i], skillIconPosY[i], iconSize, iconSize);
     text(skillDataTable.getString(i,"Skill Names"), skillIconPosX[i] + 25, skillIconPosY[i] + 16);
   } 
   
   
   //Draw the Skill Description
-  fill(0,0,0,255);
+  fill(255,255,255,255);
   textFont(fontRoboto, 15);
-  text(skillDataTable.getString(skillDescrActive,"Skill Description"), skillBookPosX + 245, skillIconPosY[0], 185, 300);
+  text(skillDataTable.getString(skillDescrActive,"Skill Description"), skillBookPosX + 247, skillIconPosY[0], 183, 300);
   
   //Draw the drawings, lol
-  tint(255, 200);
-  image(bookDrawing01, skillBookPosX + 20, skillBookPosY + 215);
+  tint(255, 220);
+  image(bookDrawing01, skillBookPosX + 30, skillBookPosY + 215);
   //image(bookDrawing02, skillBookPosX + 240, skillBookPosY + 225);
   noTint();
   
