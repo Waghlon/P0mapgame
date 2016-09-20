@@ -1,0 +1,8 @@
+Skill Names	Skill Description
+Sketching	You're going to learn how to draw. Both with a pencil and with a copy of Photoshop._ You will need to do mock ups of your projects before working on them.
+Programming	You will start with Processing, which is a variant of Java, before moving on to actual Java._ In your final year, you can choose classes about various specialities in programming.
+Modelling	A good laptop will help you here._ Software like Maya is taught, and you wont get around doing some serious 3D modelling at some point.
+Physical Design	Most courses include understanding some kind of physical object. But there are also elements of making physical prototypes, using various electronics and materials.
+Interaction Design	On second semester, you will be taught how to design an interface, using user feedback, testing and appropriate research methods. This will cover various platforms.
+Animation	Apart from modelling, you will be taught some filmmaking techniques, animation techniques and image processing.
+Sound Design	Many courses will have an audio aspect._ This include learning the correct usage and audio processing. There are also sound sensor technology.
