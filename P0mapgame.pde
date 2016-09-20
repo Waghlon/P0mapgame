@@ -133,7 +133,7 @@ void setup(){
 
 void draw(){
   
-  
+
   //shape of the path
   image(below, 0,0);
 
@@ -309,11 +309,11 @@ void draw(){
    //Wins the game ... change mouseX to ballX!!!!!!!
   if(ballX > 1358){ 
   
-      direction=5;
+      direction=1;
     if (score==0){
         confetti=1;
     score=(millis()-time)/50;
-    countdown=second();
+    countdown=millis();
     }
     
   
@@ -346,7 +346,7 @@ void draw(){
   textSize(20);
   text("You have succesfully navigated Medialogy and completed with a score of "+score, width/2, height/2+40);
   textAlign(LEFT);
-  if (second()-countdown>3){
+  if (millis()-countdown>3000){
     //Reset
     //resetting all the variables to the beginning ones
   ballX = 70;
