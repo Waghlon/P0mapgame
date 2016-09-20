@@ -12,14 +12,8 @@ Rules for good coding
 5) Please be careful to use proper indentation
 6) Clearly mark different parts of the code
 
-Revision 12 notes
-Changed the method of displaying the zone text. It now imports the text as strings from a text document, and displays them as 3D text. 
-Implemented Skillbook.
-Made the code a bit more readable, added proper indentations
-
-Revision 13 notes
-Cleaned up a bit
-Added attributes. They are set at random to begin with, and increase randomly each time the user completes a zone.
+Revision 16 notes
+Skillbook is now interactive and describes the various skills.
 ###########################################
 */
 
@@ -28,7 +22,7 @@ Added attributes. They are set at random to begin with, and increase randomly ea
 //*******************************************//  
   
 //************ Avatar Variables *************//
-int ballX, ballY, currentZone, direction, hideAvatar, showIconAtAvatar;    //ballX and ballY represent characters coordinates, currentZone variable to determine which zone you are in 
+int avatarPosX, avatarPosY, currentZone, direction, hideAvatar, showIconAtAvatar;    //avatarPosX and avatarPosY represent characters coordinates, currentZone variable to determine which zone you are in 
 boolean ballTester;                          //ballTester to determine whether the character is being held
 PImage below, ontop, verytop;                //images for below layer used to detect zones, and ontop and verytop for graphics
 PImage[] avatarImages;
@@ -39,11 +33,11 @@ int zoneTitleFontSize, zoneTextFontSize, numberOfZones;
 Table zoneTextTable;
 
 //************ Skillbook Variables *************//
-int skillBookPosX, skillBookPosY, numberOfSkills, numberOfAttributes, skillsUnlocked, iconSize, bookFontSize;
-int[] attributePoints;
+int skillBookPosX, skillBookPosY, numberOfSkills, skillsUnlocked, iconSize, bookFontSize, spaceBetweenSkills, skillDescrActive;
+int[] skillIconPosX, skillIconPosY;
 PImage skillBook, bookDrawing01, bookDrawing02;
 PImage[] skillIconsActive, skillIconsNotActive;
-String[] skillNames, attributeNames;
+Table skillDataTable;
 
 //************ Button Variables *************//
 boolean hide,hide2;                         //hide and hide2 used to have a properly working button
@@ -54,19 +48,24 @@ int time, score, countdown, confetti;        //time, score, countdown and confet
   
 //************ Fonts *************//
 PFont fontKeepCalm;
+PFont fontRoboto;
 
 //************ Title *************//
 PImage titleImage;
 
 
 void setup(){
-  
+    
+  //*********// General Setup //*********//
   size(1414, 1000, P3D);
   smooth(8);
+  fontKeepCalm = loadFont("fonts/keepCalm.vlw");
+  fontRoboto = loadFont("fonts/roboto.vlw");
+  
   
   //*********// Avatar Variables //*********//
-  ballX = 70;
-  ballY = 870;
+  avatarPosX = 70;
+  avatarPosY = 870;
   hide=true;
   hide2=true;
   direction=2;
@@ -105,32 +104,44 @@ void setup(){
   skillBookPosX = 960;
   skillBookPosY = 10;  
   
+  skillDataTable = loadTable("strings/skillData.txt", "header, tsv");
+  
   bookDrawing01 = loadImage("skillbook/bookDrawing01.png");
   bookDrawing02 = loadImage("skillbook/bookDrawing02.png");
-  skillNames = loadStrings("strings/skillNameStrings.txt");
-  attributeNames = loadStrings("strings/attributeNames.txt");
-  numberOfSkills = skillNames.length;
-  numberOfAttributes = attributeNames.length;
+  numberOfSkills = skillDataTable.getRowCount();
+  skillDescrActive = 0;
+  skillIconPosX = new int[numberOfSkills];
+  skillIconPosY = new int[numberOfSkills];
   skillIconsActive = new PImage[numberOfSkills];
   skillIconsNotActive = new PImage[numberOfSkills];
-  fontKeepCalm = loadFont("fonts/keepCalm.vlw");
   iconSize = 20;
-  bookFontSize = 14;  
+  spaceBetweenSkills = 25;
+  bookFontSize = 18;  
   
-  attributePoints = new int[numberOfAttributes];
+   //Turn the underscores in the string file into /n, which equals line breaks when drawin the text. Putting the \n directly into the table didn't work for some reason.
+  for (int i = 0; i < numberOfSkills; i++) {
+    //load in the string from each row, replace the underscores with /n, put it back into the table
+    String stringWithoutSpaces = skillDataTable.getString(i,1).replaceAll("_", "\n");
+    skillDataTable.setString(i,1,stringWithoutSpaces); 
+  }
+  
+  //Determine the position of the icons. We store these valules in an array, both for optimization, but also so that we can monitor if the mouse is on top of one of them
+  for (int i = 0; i < numberOfSkills; i++) {
+    skillIconPosX[i] = skillBookPosX + 45;
+    skillIconPosY[i] = skillBookPosY + 64 + spaceBetweenSkills*i;
+  } 
+
+  
     
-  //Load in the  icons for the skills, and put them into the array. The files are called the same as the corresponding skill, minus spaces
+  //Load in the  icons for the skills, and put them into the array. The files are called the same as the corresponding skill, minus spaces.
+  //The skill name is extracted from the skillDataTable table with getString, pulling it from row number "i", from the "Skill Names" column.
   //The spaces are removed with replaceAll(" ", "")
   //The inactive skill icons are turned grayscale using filter(GRAY)
   for (int i = 0; i < numberOfSkills; i++) {
-    skillIconsActive[i] = loadImage("skillbook/icons/" + skillNames[i].replaceAll(" ", "") +".png");
-    skillIconsNotActive[i] = loadImage("skillbook/icons/" + skillNames[i].replaceAll(" ", "") +".png");
+    String imagePath = "skillbook/icons/" + skillDataTable.getString(i,"Skill Names").replaceAll(" ", "") +".png";
+    skillIconsActive[i] = loadImage(imagePath);
+    skillIconsNotActive[i] = loadImage(imagePath);
     skillIconsNotActive[i].filter(GRAY);
-  } 
-  
-  //Assign random attribute levels
-  for (int i = 0; i < numberOfAttributes; i++) {
-    attributePoints[i] = int(random(1,7));
   } 
 
 
@@ -228,15 +239,10 @@ void draw(){
   //Unlock the next skill if you've entered a zone you haven't been in yet
   if (skillsUnlocked < currentZone - 1 && skillsUnlocked < numberOfSkills) {
     skillsUnlocked++;
+    skillDescrActive = constrain(skillsUnlocked - 1, 0, numberOfSkills);
     showIconAtAvatar = 1;
     iconTimerSaved = millis();
-    
-     //Add a random number of attribute points
-     for (int i = 0; i < numberOfAttributes; i++) {
-       attributePoints[i] += int(random(0,4));
-       attributePoints[i] = constrain(attributePoints[i], 0,11);
-     } 
-  
+ 
   }
   
  
@@ -258,8 +264,8 @@ void draw(){
    
   //Draws the avatar over the place 
   if (ballTester == true){
-    ballX=mouseX;
-    ballY=mouseY;
+    avatarPosX=mouseX;
+    avatarPosY=mouseY;
   }
   
   timer = (millis() - savedTime)/1000;
@@ -268,13 +274,13 @@ void draw(){
     
   //Determine the direction the avatar should be facing, but only once every 1/10th of a second
   if (timer > 0.1) {  
-    if (mouseY < pmouseY && ballX == mouseX && ballY == mouseY){
+    if (mouseY < pmouseY && avatarPosX == mouseX && avatarPosY == mouseY){
       direction=2;
-    } else if (mouseY > pmouseY && ballX == mouseX && ballY == mouseY){
+    } else if (mouseY > pmouseY && avatarPosX == mouseX && avatarPosY == mouseY){
     direction=0;
-    } else if (mouseX < pmouseX && ballX == mouseX && ballY == mouseY){
+    } else if (mouseX < pmouseX && avatarPosX == mouseX && avatarPosY == mouseY){
       direction=3;
-    } else if (mouseX > pmouseX && ballX == mouseX && ballY == mouseY){
+    } else if (mouseX > pmouseX && avatarPosX == mouseX && avatarPosY == mouseY){
       direction=1;
     }      
     //Reset the timer
@@ -282,7 +288,7 @@ void draw(){
   }
          
   //Draw the Avatar
-  image(avatarImages[direction], ballX-10, ballY-20, 20,30);
+  image(avatarImages[direction], avatarPosX-10, avatarPosY-20, 20,30);
   
   iconTimer = (millis() - iconTimerSaved)/1000;
   
@@ -315,11 +321,11 @@ void draw(){
     tint(255,255*fadeIn);
     fill(230,230,230,255*fadeIn);
     stroke(0, 255*fadeIn);
-    rect(ballX - 25, ballY - 55, 210, 35);
-    image(skillIconsActive[skillsUnlocked - 1], ballX - 15, ballY - 50, iconSize, iconSize);
+    rect(avatarPosX - 25, avatarPosY - 55, 210, 35);
+    image(skillIconsActive[skillsUnlocked - 1], avatarPosX - 15, avatarPosY - 50, iconSize, iconSize);
     textFont(fontKeepCalm, 22);
     fill(0,0,0,255*fadeIn);
-    text("Skill Acquired", ballX + 15, ballY - 30);
+    text("Skill Acquired", avatarPosX + 15, avatarPosY - 30);
     noTint();
     } else if (showIconAtAvatar == 1 && iconTimer > 2){
     showIconAtAvatar = 0;
@@ -330,40 +336,56 @@ void draw(){
   //****************// Draw the Skillbook //********************//
 
   image(skillBook, skillBookPosX, skillBookPosY);
-  textFont(fontKeepCalm, 26);
+  
+  //Draw the "Skills" headline
+  textFont(fontRoboto, 32);
   fill(0,0,0);
-  text("Skills", skillBookPosX + 40, skillBookPosY + 50);
+  text("Skills", skillBookPosX + 45, skillBookPosY + 50);
+  
+  //Draw the shape that shows which skills is being described on the right page
+  fill(255,255,255,85);
+  stroke(0,120);
+  beginShape();
+  vertex(skillIconPosX[skillDescrActive] - 5, skillIconPosY[skillDescrActive] - 3);
+  vertex(skillIconPosX[skillDescrActive] - 5, skillIconPosY[skillDescrActive] + iconSize + 3);
+  vertex(skillIconPosX[skillDescrActive] + 195, skillIconPosY[skillDescrActive] + iconSize + 3);
+  vertex(skillIconPosX[skillDescrActive] + 195, skillIconPosY[0] + 250);
+  vertex(skillIconPosX[skillDescrActive] + 390, skillIconPosY[0] + 250);
+  vertex(skillIconPosX[skillDescrActive] + 390, skillIconPosY[0] - 10);
+  vertex(skillIconPosX[skillDescrActive] + 195, skillIconPosY[0] - 10);
+  vertex(skillIconPosX[skillDescrActive] + 195, skillIconPosY[skillDescrActive] - 3);
+  vertex(skillIconPosX[skillDescrActive] - 5, skillIconPosY[skillDescrActive] - 3);
+  endShape();
   
   //Get ready for drawing the skills
-  textFont(fontKeepCalm, bookFontSize);
-  int spaceBetweenSkills = 25;
+  textFont(fontRoboto, bookFontSize);
   
   //Draw the icons and text for the inactive skills. "i" starts at skillsUnlocked. That way, it doesnt draw the skills that have been activated, and will be drawn by the next for loop.
   for (int i = skillsUnlocked; i < numberOfSkills; i++) {
-    fill(75,75,75,175);
-    tint(255, 165);
-    image(skillIconsNotActive[i], skillBookPosX + 45, skillBookPosY + 64 +  + spaceBetweenSkills*i, iconSize, iconSize);
-    text(skillNames[i], skillBookPosX + 70, skillBookPosY + 80 +  + spaceBetweenSkills*i);
+    fill(35,35,35,200);
+    tint(255, 195);
+    image(skillIconsNotActive[i], skillIconPosX[i], skillIconPosY[i], iconSize, iconSize);
+    text(skillDataTable.getString(i,"Skill Names"), skillIconPosX[i] + 25, skillIconPosY[i] + 16);
     noTint();
   } 
   
   //Draw the icons and text for the active skills
   for (int i = 0; i < skillsUnlocked; i++) {
     fill(0,0,0,255);
-    image(skillIconsActive[i], skillBookPosX + 45, skillBookPosY + 64 +  + spaceBetweenSkills*i, iconSize, iconSize);
-    text(skillNames[i], skillBookPosX + 70, skillBookPosY + 80 +  + spaceBetweenSkills*i);
+    image(skillIconsActive[i], skillIconPosX[i], skillIconPosY[i], iconSize, iconSize);
+    text(skillDataTable.getString(i,"Skill Names"), skillIconPosX[i] + 25, skillIconPosY[i] + 16);
   } 
   
-  //Draw the attributes
-  for (int i = 0; i < numberOfAttributes; i++) {
-    fill(0,0,0);
-    text(attributeNames[i] + ": " + attributePoints[i], skillBookPosX + 255, skillBookPosY + 80 +  + spaceBetweenSkills*i);
-  } 
+  
+  //Draw the Skill Description
+  fill(0,0,0,255);
+  textFont(fontRoboto, 15);
+  text(skillDataTable.getString(skillDescrActive,"Skill Description"), skillBookPosX + 245, skillIconPosY[0], 185, 300);
   
   //Draw the drawings, lol
   tint(255, 200);
   image(bookDrawing01, skillBookPosX + 20, skillBookPosY + 215);
-  image(bookDrawing02, skillBookPosX + 240, skillBookPosY + 225);
+  //image(bookDrawing02, skillBookPosX + 240, skillBookPosY + 225);
   noTint();
   
   //***************// Draw the title of the damn game! //******************//
@@ -376,8 +398,8 @@ void draw(){
 
   //***************// End of Game Stuff //******************//
 
-   //Wins the game ... change mouseX to ballX!!!!!!!
-  if(ballX > 1358){ 
+   //Wins the game ... change mouseX to avatarPosX!!!!!!!
+  if(avatarPosX > 1358){ 
     
     hideAvatar = 1;
   
@@ -421,8 +443,8 @@ void draw(){
     if (millis()-countdown > 5000){
       //Reset
       //resetting all the variables to the beginning ones
-    ballX = 70;
-    ballY = 870;
+    avatarPosX = 70;
+    avatarPosY = 870;
     
     hide=true;
     hide2=true;
@@ -432,11 +454,7 @@ void draw(){
     currentZone=0;
     skillsUnlocked = 0;
     hideAvatar = 0;
-    
-      //Assign random attribute levels
-    for (int i = 0; i < numberOfAttributes; i++) {
-      attributePoints[i] = int(random(1,9));
-    } 
+
   }
   }
 }
@@ -444,7 +462,7 @@ void draw(){
 //This checks if the mouse is dragging the ball. When mouse is released balltester is zeroed.
 
 void mouseDragged(){
-  if (mouseX > ballX-10 & mouseX < ballX+10 & mouseY < ballY+10 & mouseY > ballY-10){
+  if (mouseX > avatarPosX-10 & mouseX < avatarPosX+10 & mouseY < avatarPosY+10 & mouseY > avatarPosY-10){
     ballTester = true;
   }
 }
@@ -453,8 +471,21 @@ void mouseReleased(){
   ballTester=false;
 }
 
-// start of the code added by robert
+
 void mouseClicked(){
+  
+  
+  //Check if one of the skills is clicked on
+  for (int i = 0; i < numberOfSkills; i++) {
+     
+    //If the mouse is within the bounds of skill number "i", that should be set as the active skill description
+    if (mouseX > skillIconPosX[i] && mouseX < skillIconPosX[i] + 160 && mouseY > skillIconPosY[i] && mouseY < skillIconPosY[i] + iconSize) {
+      skillDescrActive = i;
+    }   
+     
+  } 
+  
+
   if(mouseX>70&mouseX<70+50&mouseY>550&mouseY<600){
     if(hide==true){
       hide=false;
