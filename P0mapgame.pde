@@ -1,7 +1,7 @@
 /*
 ###########################################
 P0 project - Map game
-Revision: 10
+Revision: 16.2 you fuckers!
 Date: 19/09/2016
 By: group 13
 Rules for good coding
@@ -12,8 +12,11 @@ Rules for good coding
 5) Please be careful to use proper indentation
 6) Clearly mark different parts of the code
 
-Revision 16 notes
+Revision 16.2 notes
 Skillbook is now interactive and describes the various skills.
+Sligtly tweaked the look of the skillbook.
+Added handdrawn filter for evalutation.
+Trying out a different font.
 ###########################################
 */
 
@@ -31,6 +34,8 @@ float timer, savedTime, iconTimer, iconTimerSaved;
 //************ Zone Text Variables *************//
 int zoneTitleFontSize, zoneTextFontSize, numberOfZones;
 Table zoneTextTable;
+PFont zoneTextFont;
+color zoneFontColor;
 
 //************ Skillbook Variables *************//
 int skillBookPosX, skillBookPosY, numberOfSkills, skillsUnlocked, iconSize, bookFontSize, spaceBetweenSkills, skillDescrActive;
@@ -49,6 +54,7 @@ int time, score, countdown, confetti;        //time, score, countdown and confet
 //************ Fonts *************//
 PFont fontKeepCalm;
 PFont fontRoboto;
+PFont fontArchitect;
 
 //************ Title *************//
 PImage titleImage;
@@ -61,6 +67,7 @@ void setup(){
   smooth(8);
   fontKeepCalm = loadFont("fonts/keepCalm.vlw");
   fontRoboto = loadFont("fonts/roboto.vlw");
+  fontArchitect = loadFont("fonts/architect.vlw");
   
   
   //*********// Avatar Variables //*********//
@@ -86,9 +93,11 @@ void setup(){
   //Each row contains title and text for each zone, so the number of rows equals number of zones.
   numberOfZones = zoneTextTable.getRowCount();
 
-  //Text Size
-  zoneTitleFontSize = 26;
-  zoneTextFontSize = 20;
+  //Font Settings
+  zoneFontColor = color(25,25,25,225);
+  zoneTextFont = fontArchitect;
+  zoneTitleFontSize = 28;
+  zoneTextFontSize = 18;
   
   //Turn the underscores in the string file into /n, which equals line breaks when drawin the text. Putting the \n directly into the table didn't work for some reason.
   for (int i = 0; i < numberOfZones; i++) {
@@ -253,10 +262,10 @@ void draw(){
   //************// Draw the text for the current zone //************//
   pushMatrix();
     rotateX(0.3);  //Rotate it in 3D space. Cool!
-    fill(0,0,0);
-    textFont(fontKeepCalm, zoneTitleFontSize);
+    fill(zoneFontColor);
+    textFont(zoneTextFont, zoneTitleFontSize);
     text(zoneTextTable.getString(currentZone,0), 450, 300, 475, 500);
-    textFont(fontKeepCalm, zoneTextFontSize);
+    textFont(zoneTextFont, zoneTextFontSize);
     text(zoneTextTable.getString(currentZone,1), 450, 340, 475, 500);
   popMatrix();
 
@@ -336,6 +345,7 @@ void draw(){
   
   //****************// Draw the Skillbook //********************//
 
+  //Draw the book itself
   image(skillBook, skillBookPosX, skillBookPosY);
   
   //Draw the "Skills" headline
@@ -468,6 +478,7 @@ void draw(){
     ballTester=false;
     currentZone=0;
     skillsUnlocked = 0;
+    skillDescrActive = 0;
     hideAvatar = 0;
 
   }
