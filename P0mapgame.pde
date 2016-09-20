@@ -36,7 +36,7 @@ float timer, savedTime, iconTimer, iconTimerSaved;
 
 //************ Zone Text Variables *************//
 int zoneTitleFontSize, zoneTextFontSize, numberOfZones;
-String[] zoneText, zoneTitle;
+Table zoneTextTable;
 
 //************ Skillbook Variables *************//
 int skillBookPosX, skillBookPosY, numberOfSkills, numberOfAttributes, skillsUnlocked, iconSize, bookFontSize;
@@ -81,14 +81,21 @@ void setup(){
 
 
   //*********// Zone Text Setup //***********//
-  zoneText = loadStrings("strings/zoneTextStrings.txt");
-  zoneTitle = loadStrings("strings/zoneTitleStrings.txt");
+  
+  //Load in the table holding the data for all zones. 
+  zoneTextTable = loadTable("strings/zoneData.txt", "header, tsv");
+  //Each row contains title and text for each zone, so the number of rows equals number of zones.
+  numberOfZones = zoneTextTable.getRowCount();
+
+  //Text Size
   zoneTitleFontSize = 26;
   zoneTextFontSize = 20;
   
-  //Turn the underscores in the string file into line breaks. Putting the \n directly into the string file didn't work for some reason.
-  for (int i = 0; i < zoneText.length; i++) {
-    zoneText[i] = zoneText[i].replaceAll("_", "\n"); 
+  //Turn the underscores in the string file into /n, which equals line breaks when drawin the text. Putting the \n directly into the table didn't work for some reason.
+  for (int i = 0; i < numberOfZones; i++) {
+    //load in the string from each row, replace the underscores with /n, put it back into the table
+    String stringWithoutSpaces = zoneTextTable.getString(i,1).replaceAll("_", "\n");
+    zoneTextTable.setString(i,1,stringWithoutSpaces); 
   }
   
   
@@ -241,9 +248,9 @@ void draw(){
     rotateX(0.3);  //Rotate it in 3D space. Cool!
     fill(0,0,0);
     textFont(fontKeepCalm, zoneTitleFontSize);
-    text(zoneTitle[currentZone], 450, 300, 475, 500);
+    text(zoneTextTable.getString(currentZone,0), 450, 300, 475, 500);
     textFont(fontKeepCalm, zoneTextFontSize);
-    text(zoneText[currentZone], 450, 340, 475, 500);
+    text(zoneTextTable.getString(currentZone,1), 450, 340, 475, 500);
   popMatrix();
 
 
@@ -312,7 +319,7 @@ void draw(){
     image(skillIconsActive[skillsUnlocked - 1], ballX - 15, ballY - 50, iconSize, iconSize);
     textFont(fontKeepCalm, 22);
     fill(0,0,0,255*fadeIn);
-    text("Skill Aqcuired", ballX + 15, ballY - 30);
+    text("Skill Acquired", ballX + 15, ballY - 30);
     noTint();
     } else if (showIconAtAvatar == 1 && iconTimer > 2){
     showIconAtAvatar = 0;
