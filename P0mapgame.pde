@@ -29,7 +29,7 @@ int avatarPosX, avatarPosY, currentZone, direction, hideAvatar, showIconAtAvatar
 boolean ballTester;                          //ballTester to determine whether the character is being held
 PImage below, ontop, verytop;                //images for below layer used to detect zones, and ontop and verytop for graphics
 PImage[] avatarImages;
-float timer, savedTime, iconTimer, iconTimerSaved;
+float timer, savedTime, iconTimer, iconTimerSaved,obsTimer,obsTimerSaved;
 
 //************ Zone Text Variables *************//
 int zoneTitleFontSize, zoneTextFontSize, numberOfZones;
@@ -58,6 +58,10 @@ PFont fontArchitect;
 
 //************ Title *************//
 PImage titleImage;
+//************obstacle**********//
+boolean obsReturn=false;
+float obsW1=80,obsH1=20,obsX1=230,obsY1=600,obsX1Big=170;
+PImage pencil;
 
 
 void setup(){
@@ -71,7 +75,7 @@ void setup(){
   
   
   //*********// Avatar Variables //*********//
-  avatarPosX = 70;
+  avatarPosX = 80;
   avatarPosY = 870;
   hide=true;
   hide2=true;
@@ -172,7 +176,7 @@ void setup(){
  
  
   titleImage = loadImage("titleImage.png");
-
+pencil=loadImage("pencil.png");
 }
 
 void draw(){
@@ -294,7 +298,7 @@ void draw(){
       direction=1;
     }      
     //Reset the timer
-    savedTime = millis();    
+  savedTime = millis();    
   }
          
   //Draw the Avatar
@@ -342,6 +346,22 @@ void draw(){
     }
     
   }
+  //****************//Obstacles//*****************************//
+  //#1
+ 
+pencil.resize(int(obsW1),int(obsH1));
+image(pencil,obsX1,obsY1);
+
+       obsX1=obsX1Big+sin(radians(millis())/5)*90; 
+     
+   
+   if((avatarPosX>=obsX1)&(avatarPosX<=obsX1+obsW1)&(avatarPosY<=obsY1+obsH1)&(avatarPosY>=obsY1)){
+   ballTester=false;
+   avatarPosX=130;
+   avatarPosY=630;
+   println("hit");
+   }
+
   
   //****************// Draw the Skillbook //********************//
 
