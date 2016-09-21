@@ -1,7 +1,7 @@
 /*
 ###########################################
 P0 project - Map game
-Revision: 17
+Revision: 18
 Date: 19/09/2016
 By: group 13
 Rules for good coding
@@ -320,10 +320,7 @@ void draw(){
   
  
 
-  //****************// Draw the top most BG layer //****************//
 
-  //Layer that's ontop of everything that the ball travels behind
-  image(verytop,0,0);
   
 
   //****************// Draw the icon of the skill recently acquired //****************//
@@ -362,8 +359,8 @@ image(pencil,obsX1,obsY1);
    
    if((avatarPosX>=obsX1)&(avatarPosX<=obsX1+obsW1)&(avatarPosY<=obsY1+obsH1)&(avatarPosY>=obsY1)){
    ballTester=false;
-   avatarPosX=130;
-   avatarPosY=630;
+   avatarPosX=192;
+   avatarPosY=810;
    println("hit");
    }
 
@@ -437,6 +434,11 @@ image(pencil,obsX1,obsY1);
   image(bookDrawing01, skillBookPosX + 30, skillBookPosY + 215);
   //image(bookDrawing02, skillBookPosX + 240, skillBookPosY + 225);
   noTint();
+  
+    //****************// Draw the top most BG layer //****************//
+
+  //Layer that's ontop of everything that the ball travels behind
+  image(verytop,0,0);
   
   //***************// Draw the title of the damn game! //******************//
   
