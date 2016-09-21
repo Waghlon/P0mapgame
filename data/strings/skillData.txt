@@ -1,8 +1,8 @@
 Skill Names	Skill Description
-Sketching	You're going to learn how to draw. Both with a pencil and with a copy of Photoshop._ You will need to do mock ups of your projects before working on them.
-Programming	You will start with Processing, which is a variant of Java, before moving on to actual Java._ In your final year, you can choose classes about various specialities in programming.
-Modelling	A good laptop will help you here._ Software like Maya is taught, and you wont get around doing some serious 3D modelling at some point.
-Physical Design	Most courses include understanding some kind of physical object. But there are also elements of making physical prototypes, using various electronics and materials.
-Interaction Design	On second semester, you will be taught how to design an interface, using user feedback, testing and appropriate research methods. This will cover various platforms.
-Animation	Apart from modelling, you will be taught some filmmaking techniques, animation techniques and image processing.
-Sound Design	Many courses will have an audio aspect._ This include learning the correct usage and audio processing. There are also sound sensor technology.
+Sketching	Sketching allows you to work both with a pencil and digitally, to illustrate your ideas before working on it.
+Programming	Programming is how you tell the computer to do what you want it to do. At AAU, languages as Java and Processing is commonly used. 
+Modelling	Modelling is the construction of digital 3D models, which are used in both movies, video games and other projects.
+Physical Design	Physical design is the understanding of how a project will work in real life, in terms of hardware and construction.
+Interaction Design	Interaction design is knowing how users think and how they will interact with your project.
+Animation	Animation consists of making 2D and 3D graphics move in a realistic and beautiful way.
+Sound Design	Sound design is the understanding of how to use sounds, how to process audio and using sound sensor technology.
