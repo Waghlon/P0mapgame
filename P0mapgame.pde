@@ -1,7 +1,7 @@
 /*
 ###########################################
 P0 project - Map game
-Revision: 16.2 you fuckers!
+Revision: 17
 Date: 19/09/2016
 By: group 13
 Rules for good coding
@@ -12,11 +12,10 @@ Rules for good coding
 5) Please be careful to use proper indentation
 6) Clearly mark different parts of the code
 
-Revision 16.2 notes
-Skillbook is now interactive and describes the various skills.
-Sligtly tweaked the look of the skillbook.
-Added handdrawn filter for evalutation.
-Trying out a different font.
+Revision 17 notes
+Obstacles implemented. Awesomesauce!
+Avatar outline when occluded implemented.
+Implemented initial text, that disappears when avatar is clicked.
 ###########################################
 */
 
@@ -26,10 +25,10 @@ Trying out a different font.
   
 //************ Avatar Variables *************//
 int avatarPosX, avatarPosY, currentZone, direction, hideAvatar, showIconAtAvatar;    //avatarPosX and avatarPosY represent characters coordinates, currentZone variable to determine which zone you are in 
-boolean ballTester;                          //ballTester to determine whether the character is being held
-PImage below, ontop, verytop;                //images for below layer used to detect zones, and ontop and verytop for graphics
+boolean ballTester, avatarActivated;;                          //ballTester to determine whether the character is being held
+PImage below, ontop, verytop, occludingLayer;                //images for below layer used to detect zones, and ontop and verytop for graphics
 PImage[] avatarImages;
-float timer, savedTime, iconTimer, iconTimerSaved,obsTimer,obsTimerSaved;
+float timer, savedTime, iconTimer, iconTimerSaved, obsTimer, obsTimerSaved, outlineTimer;
 
 //************ Zone Text Variables *************//
 int zoneTitleFontSize, zoneTextFontSize, numberOfZones;
@@ -44,10 +43,6 @@ PImage skillBook, bookDrawing01, bookDrawing02;
 PImage[] skillIconsActive, skillIconsNotActive;
 Table skillDataTable;
 
-//************ Button Variables *************//
-boolean hide,hide2;                         //hide and hide2 used to have a properly working button
-PImage placeholder3,button;                 //images for button and the text it shows
-
 //************ Game Completion Variables *************//
 int time, score, countdown, confetti;        //time, score, countdown and confetti are variables used for the ending
   
@@ -55,10 +50,12 @@ int time, score, countdown, confetti;        //time, score, countdown and confet
 PFont fontKeepCalm;
 PFont fontRoboto;
 PFont fontArchitect;
+PFont fontIgiari;
 
 //************ Title *************//
 PImage titleImage;
-//************obstacle**********//
+
+//************Obstacle**********//
 boolean obsReturn=false;
 float obsW1=80,obsH1=20,obsX1=230,obsY1=600,obsX1Big=170;
 PImage pencil;
@@ -72,13 +69,12 @@ void setup(){
   fontKeepCalm = loadFont("fonts/keepCalm.vlw");
   fontRoboto = loadFont("fonts/roboto.vlw");
   fontArchitect = loadFont("fonts/architect.vlw");
+  fontIgiari = loadFont("fonts/igiari.vlw");
   
   
   //*********// Avatar Variables //*********//
   avatarPosX = 80;
   avatarPosY = 870;
-  hide=true;
-  hide2=true;
   direction=2;
   score=0;
   ballTester=false;
@@ -88,6 +84,7 @@ void setup(){
   below = loadImage("backdrops/below1.png");
   ontop = loadImage("backdrops/ontop.png");
   verytop = loadImage("backdrops/verytop.png");
+  occludingLayer = loadImage("backdrops/occludingLayer.png");
 
 
   //*********// Zone Text Setup //***********//
@@ -159,24 +156,21 @@ void setup(){
   } 
 
 
-
-  //*********// Button and its text //*********//
-  button=loadImage("button.png");
-  button.resize(50,50);
-  placeholder3=loadImage("placeholder3.png");
-  
-  
-  
   //*********// Load in Avatar images //*********//
-  avatarImages = new PImage[4];
+  avatarImages = new PImage[8];
   avatarImages[0] = loadImage("avatar/front.png");
   avatarImages[1] = loadImage("avatar/right.png");
   avatarImages[2] = loadImage("avatar/back.png");
   avatarImages[3] = loadImage("avatar/left.png");  
+  avatarImages[4] = loadImage("avatar/frontOutline.png");
+  avatarImages[5] = loadImage("avatar/rightOutline.png");
+  avatarImages[6] = loadImage("avatar/backOutline.png");
+  avatarImages[7] = loadImage("avatar/leftOutline.png");  
  
- 
+  //*********// Other Images //*********//
   titleImage = loadImage("titleImage.png");
-pencil=loadImage("pencil.png");
+  pencil=loadImage("pencil.png");
+  
 }
 
 void draw(){
@@ -259,20 +253,38 @@ void draw(){
  
   }
   
- 
+   //Draw occluding testing layer
+  image(occludingLayer, 0, 0);
+  
+  //Test if then avatar is being occluded
+  if (get(avatarPosX, avatarPosY-10) == color(175,25,175)) {
+    outlineTimer+= 0.05;
+    outlineTimer=constrain(outlineTimer, 0, 0.33);
+  } else {
+    outlineTimer-= 0.05;   
+    outlineTimer=constrain(outlineTimer, 0, 0.33);
+  }
+  
    //image on top
    image(ontop,0,0);
 
   //************// Draw the text for the current zone //************//
   pushMatrix();
+
     rotateX(0.3);  //Rotate it in 3D space. Cool!
     fill(zoneFontColor);
     textFont(zoneTextFont, zoneTitleFontSize);
-    text(zoneTextTable.getString(currentZone,0), 450, 300, 475, 500);
-    textFont(zoneTextFont, zoneTextFontSize);
-    text(zoneTextTable.getString(currentZone,1), 450, 340, 475, 500);
+      
+    if (avatarActivated == false) { 
+      text(zoneTextTable.getString(numberOfZones-1,0), 450, 300, 475, 500);
+      textFont(zoneTextFont, zoneTextFontSize);
+      text(zoneTextTable.getString(numberOfZones-1,1), 450, 340, 475, 500);
+    } else {
+      text(zoneTextTable.getString(currentZone,0), 450, 300, 475, 500);
+      textFont(zoneTextFont, zoneTextFontSize);
+      text(zoneTextTable.getString(currentZone,1), 450, 340, 475, 500);
+    }
   popMatrix();
-
 
    //****************// Draw the Avatar //****************//
    
@@ -308,18 +320,11 @@ void draw(){
   
  
 
-  //****************// Draw the top most layers //****************//
+  //****************// Draw the top most BG layer //****************//
 
   //Layer that's ontop of everything that the ball travels behind
   image(verytop,0,0);
   
-  //draws a button(can be deleted if we implement buttons into ontop image
-  /*image(button,70,550);
-  if(hide==false){
-    image(placeholder3,width/2-335,height/2-250);
-    hide2=false;
-  }
-*/
 
   //****************// Draw the icon of the skill recently acquired //****************//
   if (showIconAtAvatar == 1 && iconTimer <= 2.5) {
@@ -441,6 +446,13 @@ image(pencil,obsX1,obsY1);
   titleImage.resize(650,0);
   image(titleImage, 70, 120);
 
+
+  //***************// Draw the Avatae Outline //******************//
+  tint(255,255*outlineTimer*3);
+  image(avatarImages[direction + 4], avatarPosX-10, avatarPosY-20, 20,30);
+  noTint();
+  
+  
   //***************// End of Game Stuff //******************//
 
    //Wins the game ... change mouseX to avatarPosX!!!!!!!
@@ -490,9 +502,6 @@ image(pencil,obsX1,obsY1);
       //resetting all the variables to the beginning ones
     avatarPosX = 70;
     avatarPosY = 870;
-    
-    hide=true;
-    hide2=true;
     direction=2;
     score=0;
     ballTester=false;
@@ -531,16 +540,12 @@ void mouseClicked(){
      
   } 
   
-
-  if(mouseX>70&mouseX<70+50&mouseY>550&mouseY<600){
-    if(hide==true){
-      hide=false;
-    }
-    if(hide2==false){ 
-      hide=true;
-      hide2=true;
+  if (avatarActivated == false) {
+    if (mouseX > avatarPosX-10 & mouseX < avatarPosX+10 & mouseY < avatarPosY+10 & mouseY > avatarPosY-10) {
+      avatarActivated = true;
     }
   }
+
 }
 
 
