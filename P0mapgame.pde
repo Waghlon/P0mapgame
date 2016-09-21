@@ -1,7 +1,7 @@
 /*
 ###########################################
 P0 project - Map game
-Revision: 18
+Revision: 18.1
 Date: 19/09/2016
 By: group 13
 Rules for good coding
@@ -12,10 +12,9 @@ Rules for good coding
 5) Please be careful to use proper indentation
 6) Clearly mark different parts of the code
 
-Revision 17 notes
-Obstacles implemented. Awesomesauce!
-Avatar outline when occluded implemented.
-Implemented initial text, that disappears when avatar is clicked.
+Revision 18.1 notes
+Slightly changed the way the avatar is drawn and positioned.
+Obstacle and avatar collision adjusted.
 ###########################################
 */
 
@@ -24,8 +23,8 @@ Implemented initial text, that disappears when avatar is clicked.
 //*******************************************//  
   
 //************ Avatar Variables *************//
-int avatarPosX, avatarPosY, currentZone, direction, hideAvatar, showIconAtAvatar;    //avatarPosX and avatarPosY represent characters coordinates, currentZone variable to determine which zone you are in 
-boolean ballTester, avatarActivated;;                          //ballTester to determine whether the character is being held
+int avatarSizeX, avatarSizeY, avatarCollisionBoxX, avatarCollisionBoxY, avatarPosX, avatarPosY, currentZone, direction, hideAvatar, showIconAtAvatar;    //avatarPosX and avatarPosY represent characters coordinates, currentZone variable to determine which zone you are in 
+boolean avatarSelected, avatarActivated;;                          //avatarSelected to determine whether the character is being held
 PImage below, ontop, verytop, occludingLayer;                //images for below layer used to detect zones, and ontop and verytop for graphics
 PImage[] avatarImages;
 float timer, savedTime, iconTimer, iconTimerSaved, obsTimer, obsTimerSaved, outlineTimer;
@@ -73,11 +72,15 @@ void setup(){
   
   
   //*********// Avatar Variables //*********//
+  avatarSizeX = 35;
+  avatarSizeY = 35;
+  avatarCollisionBoxX = 23;
+  avatarCollisionBoxY = 27;
   avatarPosX = 80;
   avatarPosY = 870;
   direction=2;
   score=0;
-  ballTester=false;
+  avatarSelected=false;
 
 
   //*********// Load in background and foreground images //*********//
@@ -180,10 +183,10 @@ void draw(){
   image(below, 0,0);
 
   //if the below is white then it resets the ball
-  if(ballTester==true){
+  if(avatarSelected==true){
     if (get(mouseX,mouseY) == color(255,255,255)){
       println("BAD!");
-      ballTester = false;
+      avatarSelected = false;
     }
   
     //Zones
@@ -289,7 +292,7 @@ void draw(){
    //****************// Draw the Avatar //****************//
    
   //Draws the avatar over the place 
-  if (ballTester == true){
+  if (avatarSelected == true){
     avatarPosX=mouseX;
     avatarPosY=mouseY;
   }
@@ -314,14 +317,13 @@ void draw(){
   }
          
   //Draw the Avatar
-  image(avatarImages[direction], avatarPosX-10, avatarPosY-20, 20,30);
+  imageMode(CENTER);
+  image(avatarImages[direction], avatarPosX, avatarPosY, avatarSizeX,avatarSizeX);
+  imageMode(CORNER);
+  
   
   iconTimer = (millis() - iconTimerSaved)/1000;
-  
- 
 
-
-  
 
   //****************// Draw the icon of the skill recently acquired //****************//
   if (showIconAtAvatar == 1 && iconTimer <= 2.5) {
@@ -351,18 +353,18 @@ void draw(){
   //****************//Obstacles//*****************************//
   //#1
  
-pencil.resize(int(obsW1),int(obsH1));
-image(pencil,obsX1,obsY1);
+  pencil.resize(int(obsW1),int(obsH1));
+  image(pencil,obsX1,obsY1);
 
-       obsX1=obsX1Big+sin(radians(millis())/5)*90; 
+  obsX1=obsX1Big+sin(radians(millis())/5)*90; 
      
    
-   if((avatarPosX>=obsX1)&(avatarPosX<=obsX1+obsW1)&(avatarPosY<=obsY1+obsH1)&(avatarPosY>=obsY1)){
-   ballTester=false;
-   avatarPosX=192;
-   avatarPosY=810;
-   println("hit");
-   }
+  if(avatarPosX >= obsX1 - avatarCollisionBoxX/2 && avatarPosX <= obsX1 + obsW1 + avatarCollisionBoxX/2 && avatarPosY + avatarCollisionBoxY/2 >= obsY1 && avatarPosY - avatarCollisionBoxY/2 <= obsY1 + obsH1) {
+    avatarSelected=false;
+    avatarPosX=192;
+    avatarPosY=810;
+    println("hit");
+  }
 
   
   //****************// Draw the Skillbook //********************//
@@ -435,11 +437,6 @@ image(pencil,obsX1,obsY1);
   //image(bookDrawing02, skillBookPosX + 240, skillBookPosY + 225);
   noTint();
   
-    //****************// Draw the top most BG layer //****************//
-
-  //Layer that's ontop of everything that the ball travels behind
-  image(verytop,0,0);
-  
   //***************// Draw the title of the damn game! //******************//
   
   //textFont(fontKeepCalm, 48);
@@ -447,11 +444,18 @@ image(pencil,obsX1,obsY1);
   //1text("Journey of Medialogy", 85, 170);
   titleImage.resize(650,0);
   image(titleImage, 70, 120);
+  
 
+  //****************// Draw the top most BG layer //****************//
 
-  //***************// Draw the Avatae Outline //******************//
+  //Layer that's ontop of everything that the ball travels behind
+  image(verytop,0,0);
+
+  //***************// Draw the Avatar Outline //******************//
+  imageMode(CENTER);
   tint(255,255*outlineTimer*3);
-  image(avatarImages[direction + 4], avatarPosX-10, avatarPosY-20, 20,30);
+  image(avatarImages[direction + 4], avatarPosX, avatarPosY, avatarSizeX, avatarSizeY);
+  imageMode(CORNER);
   noTint();
   
   
@@ -506,7 +510,7 @@ image(pencil,obsX1,obsY1);
     avatarPosY = 870;
     direction=2;
     score=0;
-    ballTester=false;
+    avatarSelected=false;
     currentZone=0;
     skillsUnlocked = 0;
     skillDescrActive = 0;
@@ -516,16 +520,21 @@ image(pencil,obsX1,obsY1);
   }
 }
 
-//This checks if the mouse is dragging the ball. When mouse is released balltester is zeroed.
+//This checks if the mouse is dragging the ball. When mouse is released avatarSelected is zeroed.
 
 void mouseDragged(){
-  if (mouseX > avatarPosX-10 & mouseX < avatarPosX+10 & mouseY < avatarPosY+10 & mouseY > avatarPosY-10){
-    ballTester = true;
+  
+  //If the mouse is within the bounding box of the avatar, while mousebutton is held down, the avatar is selected, and can be dragged
+  if (mouseX > avatarPosX - avatarSizeX/2 && mouseX < avatarPosX + avatarSizeX/2 && mouseY > avatarPosY - avatarSizeX/2 && mouseY < avatarPosY + avatarSizeX/2) {
+    avatarSelected = true;
   }
+  
 }
 
 void mouseReleased(){
-  ballTester=false;
+  
+  //The avatar is no longer selected
+  avatarSelected=false;
 }
 
 
@@ -543,7 +552,7 @@ void mouseClicked(){
   } 
   
   if (avatarActivated == false) {
-    if (mouseX > avatarPosX-10 & mouseX < avatarPosX+10 & mouseY < avatarPosY+10 & mouseY > avatarPosY-10) {
+    if (mouseX > avatarPosX - avatarSizeX/2 && mouseX < avatarPosX + avatarSizeX/2 && mouseY > avatarPosY - avatarSizeX/2 && mouseY < avatarPosY + avatarSizeX/2) {
       avatarActivated = true;
     }
   }
