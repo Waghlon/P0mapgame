@@ -1,7 +1,0 @@
-Sketching
-Programming
-Modelling
-Physical Design
-Interaction Design
-Animation
-Sound Design

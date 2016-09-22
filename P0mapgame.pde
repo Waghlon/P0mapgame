@@ -1,6 +1,8 @@
 /*
 ###########################################
  P0 project - Map game
+ Revision: 20
+ Date: 22/09/2016
  By: group 13
  Rules for good coding
  1) Make sure to regularly comment your code
@@ -10,17 +12,27 @@
  5) Please be careful to use proper indentation
  6) Clearly mark different parts of the code
  
-Revision 19 notes
-Speaker/Soundwave obstacle fully implemented
-Animated the skill icons when a new skill is unlocked
-Put the zone color codes into an array. The colors are now all grayscale. Easy to generate in a "for loop".
-
+Revision 20 notes
+Images implemented on both the zone text area, and the skillbook.
+Game state handler implemented.
+Lock/splash screen implemented.
+ 
  ###########################################
  */
 
 //*******************************************//
 //*********// Declaring Variables //*********//
 //*******************************************//  
+
+//************ Game State Variables *************//
+int gameState;    //0 = Black Screen, 1 = Black Screen -> Splash Screen, 2 = Splash Screen, 3 = Splash Screen - > Game, 4 = Game is running, 5 = End of Game Screen, 6 = Game -> Black, 7 = Game over man, game over! What the fuck are we gonna do now? 
+float gameStateTimer, gameStateSavedTime;
+
+//************ Lock Screen Variables *************//
+PImage lockScreenBG, boatMan, boatManColorCode;
+float blackToSplashDuration, boatManPosX, boatManPosY, boatManStartPosX, boatManStartPosY, splashToGameDuration, finishScreenDuration, finishToBlackDuration, endBlackScreenDuration;
+boolean boatManUnderMouse, boatManSelected;
+float splashFader;
 
 //************ Avatar Variables *************//
 int avatarSizeX, avatarSizeY, avatarCollisionBoxX, avatarCollisionBoxY, currentZone, direction, hideAvatar, showIconAtAvatar, lastUnlockedSkill;    //avatarCurrentPosX and avatarCurrentPosY represent characters coordinates, currentZone variable to determine which zone you are in 
@@ -34,14 +46,15 @@ float directionTimer, savedTime, iconTimer, iconTimerSaved, outlineTimer;
 int zoneTitleFontSize, zoneTextFontSize, numberOfZones;
 Table zoneTextTable;
 PFont zoneTextFont;
+PImage[] zoneImages;
 color zoneFontColor;
 color[] zoneColorCodes;
 
 //************ Skillbook Variables *************//
 int skillBookPosX, skillBookPosY, numberOfSkills, skillsUnlocked, iconSize, bookFontSize, spaceBetweenSkills, skillDescrActive;
 int[] skillIconPosX, skillIconPosY;
-PImage skillBook, bookDrawing01, bookDrawing02;
-PImage[] skillIconsActive, skillIconsNotActive;
+PImage skillBook, skillTitleBg;
+PImage[] skillIconsActive, skillIconsNotActive, skillSketches;
 Table skillDataTable;
 
 //************ Animated Skill Icon Variables *************//
@@ -83,17 +96,39 @@ void setup() {
     fontIgiari = loadFont("fonts/igiari.vlw");
 
 
+    //*********// Game State Setup //*********//
+    blackToSplashDuration = 1;
+    splashToGameDuration = 1;
+    finishScreenDuration = 4;
+    finishToBlackDuration = 2;
+    endBlackScreenDuration = 2;
+    
+    gameState = 0;
+    gameStateSavedTime = millis();
+    gameStateTimer = 0;
+
+
+    //*********// Lock Screen Setup //*********//
+    lockScreenBG = loadImage("lockscreen/lockScreenBG.png");
+    boatMan = loadImage("lockscreen/boatMan.png");
+    boatManColorCode = loadImage("lockscreen/boatManColorCode.png");
+
+    boatManStartPosX = 25;
+    boatManStartPosY = 450;
+    boatManPosX = boatManStartPosX;
+    boatManPosY = boatManStartPosY;
+
+
     //*********// Avatar Variables //*********//
     avatarSizeX = 35;
     avatarSizeY = 35;
     avatarCollisionBoxX = 16;
     avatarCollisionBoxY = 22;
-    avatarStartingPosX = 80;    //1200
-    avatarStartingPosY = 870;  //880
+    avatarStartingPosX = 80;
+    avatarStartingPosY = 870;
     avatarCurrentPosX = avatarStartingPosX;
     avatarCurrentPosY = avatarStartingPosY;
     direction=2;
-    score=0;
     avatarSelected=false;
 
 
@@ -110,25 +145,33 @@ void setup() {
     zoneTextTable = loadTable("strings/zoneData.txt", "header, tsv");
     //Each row contains title and text for each zone, so the number of rows equals number of zones.
     numberOfZones = zoneTextTable.getRowCount();
-    
+
     zoneColorCodes = new color[numberOfZones];
-    
+    zoneImages = new PImage[numberOfZones];
+
+    //Load in zone images
+    for ( int i = 0; i < numberOfZones; i++) {
+        zoneImages[i] = loadImage("photos/zoneImage" + i + ".png");
+    }
+
     //Assign the zones a color code
     for ( int i = 0; i < numberOfZones; i++) {
-        zoneColorCodes[i] = color(15*(i + 1),15*(i + 1),15*(i + 1));
+        zoneColorCodes[i] = color(15*(i + 1), 15*(i + 1), 15*(i + 1));
     }
 
     //Font Settings
     zoneFontColor = color(25, 25, 25, 225);
-    zoneTextFont = fontArchitect;
-    zoneTitleFontSize = 28;
-    zoneTextFontSize = 18;
+    zoneTextFont = fontRoboto;  //fontArchitect;
+    zoneTitleFontSize = 26;
+    zoneTextFontSize = 20;
 
     //Turn the underscores in the string file into /n, which equals line breaks when drawin the text. Putting the \n directly into the table didn't work for some reason.
     for (int i = 0; i < numberOfZones; i++) {
         //load in the string from each row, replace the underscores with /n, then put it back into the table with setString
-        String stringWithoutSpaces = zoneTextTable.getString(i, 1).replaceAll("_", "\n");
-        zoneTextTable.setString(i, 1, stringWithoutSpaces);
+        String string1WithoutSpaces = zoneTextTable.getString(i, 1).replaceAll("_", "\n");
+        zoneTextTable.setString(i, 1, string1WithoutSpaces);
+        String string2WithoutSpaces = zoneTextTable.getString(i, 2).replaceAll("_", "\n");
+        zoneTextTable.setString(i, 2, string2WithoutSpaces);
     }
 
 
@@ -137,10 +180,7 @@ void setup() {
     skillBook.resize(450, 0);
     skillBookPosX = 960;
     skillBookPosY = 10;  
-
-    //Load in the drawings
-    bookDrawing01 = loadImage("skillbook/bookDrawing01.png");
-    bookDrawing02 = loadImage("skillbook/bookDrawing02.png");
+    skillTitleBg = loadImage("bar.png");
 
     //Load in the Skill text strings
     skillDataTable = loadTable("strings/skillData.txt", "header, tsv");
@@ -179,6 +219,12 @@ void setup() {
         skillIconsNotActive[i].filter(GRAY);
     } 
 
+    //Load in the sketches for each skill
+    skillSketches = new PImage[numberOfSkills];
+    for (int i = 0; i < numberOfSkills; i++) {
+        skillSketches[i] = loadImage("skillbook/sketches/" + skillDataTable.getString(i, "Skill Names").replaceAll(" ", "") +".png");
+    } 
+
     //*********// Animated Skill Icon Settings //*********//
 
     iconAnimDuration = 1.5;
@@ -205,11 +251,11 @@ void setup() {
     obs1PosX=230;
     obs1PosY=600;
     obs1PathPosX=170;
-    
+
     //Avatar reset coordinates
     avatarReset1PosX = 192;
     avatarReset1PosY = 810;
-    
+
     pencil=loadImage("obstacles/pencil.png");
 
 
@@ -224,160 +270,268 @@ void setup() {
     obs2CurrentPosY = obs2StartingPosY;
     soundWaveScale = 1;
     obs2Opacity = 255;
-    
+
     //Avatar reset coordinates
     avatarReset2PosX = 1200;
     avatarReset2PosY = 880;
-    
+
     soundwaves = loadImage("obstacles/soundwaves.png");
+
+
+
+    println("Done with setup");
 }
+
+
+//*********************************************************************************//
+//***********************// Start Drawing the Actual Game //***********************//
+//*********************************************************************************//
+
 
 void draw() {
 
+    //************************************************************//
+    //*************// Keep track of the game state //*************//
+    //************************************************************//   
 
-    //shape of the path
-    image(below, 0, 0);
+    //println(gameStateTimer);
+
+    gameStateTimer = (millis() - gameStateSavedTime)/1000;
+
+    if (gameState == 0 && gameStateTimer > 2) {
+        gameState = 1;
+        gameStateSavedTime = millis();
+        gameStateTimer = 0;
+        println("Do Transition");
+    } else if (gameState == 1 && gameStateTimer > blackToSplashDuration) {
+        gameState = 2;
+        gameStateSavedTime = millis();
+        gameStateTimer = 0;
+        println("Transition Done");
+    } else if (gameState == 2 && boatManPosX > 700) {
+        gameState = 3;
+        boatManSelected = false;
+        println("time to unlock bitch");
+        gameStateSavedTime = millis();
+        gameStateTimer = 0;
+    } else if (gameState == 3 && gameStateTimer > splashToGameDuration) {
+        gameState = 4;
+        println("game fully unlocked bitch");
+        gameStateSavedTime = millis();
+        gameStateTimer = 0;
+    } else if (gameState == 4 && avatarCurrentPosX > 1358) {
+        gameState = 5;
+        hideAvatar = 1;
+        println("You have finished the game");
+        score=millis()/50;
+        gameStateSavedTime = millis();
+        gameStateTimer = 0;
+    } else if (gameState == 5 && gameStateTimer > finishScreenDuration ) {
+        gameState = 6;
+        println("game is shutting down");
+        gameStateSavedTime = millis();
+        gameStateTimer = 0;
+    } else if (gameState == 6 && gameStateTimer > finishToBlackDuration) {
+        gameState = 7;
+        println("game is about to reset");
+        gameStateSavedTime = millis();
+        gameStateTimer = 0;
+    } else if (gameState == 7 && gameStateTimer > endBlackScreenDuration) {
+        avatarCurrentPosX = avatarStartingPosX;
+        avatarCurrentPosY = avatarStartingPosY;
+        direction=2;
+        score=0;
+        avatarSelected=false;
+        currentZone=0;
+        skillsUnlocked = 0;
+        skillDescrActive = 0;
+        hideAvatar = 0;
+        boatManPosX = boatManStartPosX;
+        boatManPosY = boatManStartPosY;
+        println("game has reset");
+        gameState = 0;                            //The final reset switch
+    }
 
     //************************************************************//
-    //*************// Check the Avatar Positioning //*************//
-    //************************************************************//
+    //***********************// Lock Screen //********************//
+    //************************************************************//       
 
-    //if the below is white then it resets the ball
-    if (avatarSelected==true) {
-        
-        if (get(mouseX, mouseY) == color(255, 255, 255)) {
-            println("BAD!");
-            avatarSelected = false;
+    if (gameState == 0) {
+        background(0, 0, 0);
+    } else if (gameState == 1) {
+        image(lockScreenBG, 0, 0, width, height);
+        image(boatMan, 25, 450, 600, 467);
+        image(titleImage, 70, 120, 650, 86);
+        color bgColor = color(0, 0, 0, 255*(1 - (gameStateTimer - 0.05)/blackToSplashDuration));
+        fill(bgColor);
+        rect(0, 0, width, height);
+    } else if (gameState == 2) {        //We're on the lock screen
+
+        image(lockScreenBG, 0, 0, width, height);
+
+        if (boatManSelected == true) {
+            boatManPosX = boatManPosX + mouseX - pmouseX;
+            boatManPosX = constrain(boatManPosX, 25, 800);
         }
 
-         //Check which color is under the mouse cursor, and what zones that corresponds to
-        for ( int i = 0; i < numberOfZones; i++) {
-            if (get(mouseX, mouseY) == zoneColorCodes[i]) {
-                currentZone = i;
-                println("User is in area #" + i);
+        image(boatManColorCode, boatManPosX, boatManPosY, 600, 467);
+
+        if (get(mouseX, mouseY) == color(200, 50, 50)) {
+            boatManUnderMouse = true;
+        } else {
+            boatManUnderMouse = false;
+        }
+        
+        image(lockScreenBG, 0, 0, width, height);
+        image(boatMan, boatManPosX, boatManPosY, 600, 467);
+        image(titleImage, 70, 120, 650, 86);
+    }  
+
+
+    if (gameState >= 3) {
+
+
+        //shape of the path
+        image(below, 0, 0);
+
+        //************************************************************//
+        //*************// Check the Avatar Positioning //*************//
+        //************************************************************//
+
+        //if the below is white then it resets the ball
+        if (avatarSelected==true) {
+
+            if (get(mouseX, mouseY) == color(255, 255, 255)) {
+                avatarSelected = false;
+            }
+
+            //Check which color is under the mouse cursor, and what zones that corresponds to
+            for ( int i = 0; i < numberOfZones; i++) {
+                if (get(mouseX, mouseY) == zoneColorCodes[i]) {
+                    currentZone = i;
+                    //println("User is in area #" + i);
+                }
             }
         }
-    }
-            
-
-    //Unlock the next skill if you've entered a zone you haven't been in yet
-    if (skillsUnlocked < currentZone - 1 && skillsUnlocked < numberOfSkills && showIconAtAvatar == 0) {
-        int skillsSoonUnlocked = skillsUnlocked + 1;
-        lastUnlockedSkill  = constrain(skillsSoonUnlocked - 1, 0, numberOfSkills - 1);
-        showIconAtAvatar = 1;
-        activationPosX = avatarCurrentPosX;
-        activationPosY = avatarCurrentPosY;
-        iconTimerSaved = millis();
-    }
-
-    //************************************************************//
-    //************// Check if the Avatar is being Occluded  //************//
-    //************************************************************//
-
-    //Draw occluding testing layer
-    image(occludingLayer, 0, 0);
-
-    //Test if then avatar is being occluded
-    if (get(avatarCurrentPosX, avatarCurrentPosY-10) == color(175, 25, 175)) {
-        outlineTimer+= 0.02;
-        outlineTimer=constrain(outlineTimer, 0, 0.5);
-    } else {
-        outlineTimer-= 0.02;   
-        outlineTimer=constrain(outlineTimer, 0, 0.5);
-    }
-    
-    //************************************************************//
-    //************// Draw the main background image //************//
-    //************************************************************//
-    image(ontop, 0, 0);
 
 
-    //****************************************************************//
-    //************// Draw the text for the current zone //************//
-    //****************************************************************//
-    
-    pushMatrix();
+        //Unlock the next skill if you've entered a zone you haven't been in yet
+        if (skillsUnlocked < currentZone - 1 && skillsUnlocked < numberOfSkills && showIconAtAvatar == 0) {
+            int skillsSoonUnlocked = skillsUnlocked + 1;
+            lastUnlockedSkill  = constrain(skillsSoonUnlocked - 1, 0, numberOfSkills - 1);
+            showIconAtAvatar = 1;
+            activationPosX = avatarCurrentPosX;
+            activationPosY = avatarCurrentPosY;
+            iconTimerSaved = millis();
+        }
+
+        //************************************************************//
+        //************// Check if the Avatar is being Occluded  //************//
+        //************************************************************//
+
+        //Draw occluding testing layer
+        image(occludingLayer, 0, 0);
+
+        //Test if then avatar is being occluded
+        if (get(avatarCurrentPosX, avatarCurrentPosY-10) == color(175, 25, 175)) {
+            outlineTimer+= 0.02;
+            outlineTimer=constrain(outlineTimer, 0, 0.5);
+        } else {
+            outlineTimer-= 0.02;   
+            outlineTimer=constrain(outlineTimer, 0, 0.5);
+        }
+
+        //************************************************************//
+        //************// Draw the main background image //************//
+        //************************************************************//
+        image(ontop, 0, 0);
+
+
+        //****************************************************************//
+        //************// Draw the text for the current zone //************//
+        //****************************************************************//
+
+        pushMatrix();
 
         rotateX(0.3);  //Rotate it in 3D space. Cool!
         fill(zoneFontColor);
         textFont(zoneTextFont, zoneTitleFontSize);
-    
-        if (avatarActivated == false) { 
-            text(zoneTextTable.getString(numberOfZones-1, 0), 450, 300, 475, 500);
-            textFont(zoneTextFont, zoneTextFontSize);
-            text(zoneTextTable.getString(numberOfZones-1, 1), 450, 340, 475, 500);
-        } else {
-            text(zoneTextTable.getString(currentZone, 0), 450, 300, 475, 500);
-            textFont(zoneTextFont, zoneTextFontSize);
-            text(zoneTextTable.getString(currentZone, 1), 450, 340, 475, 500);
-        }
-    popMatrix();
 
-    //*****************************************************//
-    //****************// Draw the Avatar //****************//
-    //*****************************************************//
+        //Draw the title of the Zone
+        text(zoneTextTable.getString(currentZone, 0), 450, 300, 475, 500);
+        textFont(zoneTextFont, zoneTextFontSize);
 
-    //Set the position of the avatar
-    if (avatarSelected == true) {
-        avatarCurrentPosX = mouseX;
-        avatarCurrentPosY = mouseY;
-    }
+        //Draw the zone text in two textboxes.
+        text(zoneTextTable.getString(currentZone, "Text String 1"), 450, 340, 460, 120);
+        text(zoneTextTable.getString(currentZone, "Text String 2"), 450, 465, 275, 250);
 
-    directionTimer = (millis() - savedTime)/1000;
+        //Draw the image in the bottom right quadrant
+        image(zoneImages[currentZone], 725, 460, 180, 140);
 
-    if (hideAvatar != 1) {
+        popMatrix();
 
-        //Determine the direction the avatar should be facing, but only once every 1/10th of a second
-        if (directionTimer > 0.1) {  
-            if (mouseY < pmouseY && avatarCurrentPosX == mouseX && avatarCurrentPosY == mouseY) {
-                direction=2;
-            } else if (mouseY > pmouseY && avatarCurrentPosX == mouseX && avatarCurrentPosY == mouseY) {
-                direction=0;
-            } else if (mouseX < pmouseX && avatarCurrentPosX == mouseX && avatarCurrentPosY == mouseY) {
-                direction=3;
-            } else if (mouseX > pmouseX && avatarCurrentPosX == mouseX && avatarCurrentPosY == mouseY) {
-                direction=1;
-            }      
-            //Reset the timer
-            savedTime = millis();
+        //*****************************************************//
+        //****************// Draw the Avatar //****************//
+        //*****************************************************//
+
+        //Set the position of the avatar
+        if (avatarSelected == true) {
+            avatarCurrentPosX = mouseX;
+            avatarCurrentPosY = mouseY;
         }
 
-        //Draw the Avatar
-        imageMode(CENTER);
-        image(avatarImages[direction], avatarCurrentPosX, avatarCurrentPosY, avatarSizeX, avatarSizeX);
-        imageMode(CORNER);
+        directionTimer = (millis() - savedTime)/1000;
 
-        
-    }
+        if (hideAvatar != 1) {
+
+            //Determine the direction the avatar should be facing, but only once every 1/10th of a second
+            if (directionTimer > 0.1) {  
+                if (mouseY < pmouseY && avatarCurrentPosX == mouseX && avatarCurrentPosY == mouseY) {
+                    direction=2;
+                } else if (mouseY > pmouseY && avatarCurrentPosX == mouseX && avatarCurrentPosY == mouseY) {
+                    direction=0;
+                } else if (mouseX < pmouseX && avatarCurrentPosX == mouseX && avatarCurrentPosY == mouseY) {
+                    direction=3;
+                } else if (mouseX > pmouseX && avatarCurrentPosX == mouseX && avatarCurrentPosY == mouseY) {
+                    direction=1;
+                }      
+                //Reset the timer
+                savedTime = millis();
+            }
+
+            //Draw the Avatar
+            imageMode(CENTER);
+            image(avatarImages[direction], avatarCurrentPosX, avatarCurrentPosY, avatarSizeX, avatarSizeX);
+            imageMode(CORNER);
+        }
 
 
 
-    //****************// Obstacle 1 //*****************************//
+        //****************// Obstacle 1 //*****************************//
 
-    pencil.resize(int(obs1Width), int(obs1Height));
-    image(pencil, obs1PosX, obs1PosY);
+        pencil.resize(int(obs1Width), int(obs1Height));
+        image(pencil, obs1PosX, obs1PosY);
 
-    obs1PosX=obs1PathPosX+sin(radians(millis())/5)*90; 
+        obs1PosX=obs1PathPosX+sin(radians(millis())/5)*90; 
 
 
-    if (avatarCurrentPosX >= obs1PosX - avatarCollisionBoxX/2 && avatarCurrentPosX <= obs1PosX + obs1Width + avatarCollisionBoxX/2 && avatarCurrentPosY + avatarCollisionBoxY/2 >= obs1PosY && avatarCurrentPosY - avatarCollisionBoxY/2 <= obs1PosY + obs1Height) {
-        avatarSelected=false;
-        avatarCurrentPosX = avatarReset1PosX;
-        avatarCurrentPosY = avatarReset1PosY;
-        println("hit");
-    }
+        if (avatarCurrentPosX >= obs1PosX - avatarCollisionBoxX/2 && avatarCurrentPosX <= obs1PosX + obs1Width + avatarCollisionBoxX/2 && avatarCurrentPosY + avatarCollisionBoxY/2 >= obs1PosY && avatarCurrentPosY - avatarCollisionBoxY/2 <= obs1PosY + obs1Height) {
+            avatarSelected=false;
+            avatarCurrentPosX = avatarReset1PosX;
+            avatarCurrentPosY = avatarReset1PosY;
+        }
 
-    //****************// Obstacle 2 //*****************************//
+        //****************// Obstacle 2 //*****************************//
 
-    pushMatrix();
-    
+        pushMatrix();
+
         obs2Timer = (millis() - obs2TimerSaved)/1000;
         translate(obs2CurrentPosX, obs2CurrentPosY);
         rotate(radians(45));
         translate(-obs2CurrentPosX, -obs2CurrentPosY);
-    
+
         if (obs2Timer > obs2PauseLength/2 && obs2Timer < obs2WaveDuration + obs2PauseLength/2) {
-            
+
             //Draw the sound wave, and use the obs2WaveDuration to control how fast the wave animated
             tint(255, obs2Opacity);
             image(soundwaves, obs2CurrentPosX, obs2CurrentPosY, obs2Width*soundWaveScale, obs2Height*soundWaveScale);
@@ -386,16 +540,16 @@ void draw() {
             obs2CurrentPosX += 1.8/obs2WaveDuration;
             obs2CurrentPosY += 0.5/obs2WaveDuration;
             soundWaveScale += 0.03/obs2WaveDuration;
-            
+
             //Check for collision
             //Holy shit that's a long "if". Basically check to see if the avatar is within a box, that roughly corresponds to the sound wave, at a certain time.
             if ( avatarCurrentPosX >= obs2StartingPosX + 10 && avatarCurrentPosX <= obs2StartingPosX + 120 && avatarCurrentPosY <= obs2StartingPosY + 200 && avatarCurrentPosY >= obs2StartingPosY + 40 && obs2Timer < obs2WaveDuration*0.75 + obs2PauseLength/2 && obs2Timer > obs2WaveDuration*0.15 + obs2PauseLength/2) {
-            avatarSelected=false;
-            avatarCurrentPosX = avatarReset2PosX;
-            avatarCurrentPosY = avatarReset2PosY;
+                avatarSelected=false;
+                avatarCurrentPosX = avatarReset2PosX;
+                avatarCurrentPosY = avatarReset2PosY;
             }
-            
-          //Reset the wave
+
+            //Reset the wave
         } else if (obs2Timer > obs2PauseLength/2 + obs2WaveDuration) {
             obs2TimerSaved = millis();
             soundWaveScale=1;
@@ -404,217 +558,190 @@ void draw() {
             obs2Opacity = 255;
         }
 
-    popMatrix();
+        popMatrix();
 
-    //****************// Draw the Skillbook //********************//
+        //****************// Draw the Skillbook //********************//
 
-    //Draw the book itself
-    image(skillBook, skillBookPosX, skillBookPosY);
+        //Draw the book itself
+        image(skillBook, skillBookPosX, skillBookPosY);
 
-    //Draw the "Skills" headline
-    textFont(fontRoboto, 32);
-    fill(0, 0, 0);
-    text("Skills", skillBookPosX + 45, skillBookPosY + 50);
+        //Draw the "Skills" headline
+        textFont(fontRoboto, 32);
+        fill(0, 0, 0);
+        text("Skills", skillBookPosX + 45, skillBookPosY + 50);
 
-    //Draw the shape that shows which skills is being described on the right page
-    fill(0, 0, 0, 125);
-    stroke(0, 150);
-    beginShape();
-    vertex(skillIconPosX[skillDescrActive] - 5, skillIconPosY[skillDescrActive] - 3);
-    vertex(skillIconPosX[skillDescrActive] - 5, skillIconPosY[skillDescrActive] + iconSize + 3);
-    vertex(skillIconPosX[skillDescrActive] + 195, skillIconPosY[skillDescrActive] + iconSize + 3);
-    vertex(skillIconPosX[skillDescrActive] + 195, skillIconPosY[0] + 270);
-    vertex(skillIconPosX[skillDescrActive] + 385, skillIconPosY[0] + 270);
-    vertex(skillIconPosX[skillDescrActive] + 385, skillIconPosY[0] - 35);
-    vertex(skillIconPosX[skillDescrActive] + 195, skillIconPosY[0] - 35);
-    vertex(skillIconPosX[skillDescrActive] + 195, skillIconPosY[skillDescrActive] - 3);
-    vertex(skillIconPosX[skillDescrActive] - 5, skillIconPosY[skillDescrActive] - 3);
-    endShape();
+        //Draw the image that highlights active skill description
+        image(skillTitleBg, skillIconPosX[skillDescrActive] - 15, skillIconPosY[skillDescrActive] - 10, 240, iconSize + 20);
 
-    //Get ready for drawing the skills
-    textFont(fontRoboto, bookFontSize);
+        //Get ready for drawing the skills
+        textFont(fontRoboto, bookFontSize);
 
-    //Draw the icons and text for the inactive skills. "i" starts at skillsUnlocked. That way, it doesnt draw the skills that have been activated, and will be drawn by the next for loop.
-    for (int i = skillsUnlocked; i < numberOfSkills; i++) {
+        //Draw the icons and text for the inactive skills. "i" starts at skillsUnlocked. That way, it doesnt draw the skills that have been activated, and will be drawn by the next for loop.
+        for (int i = skillsUnlocked; i < numberOfSkills; i++) {
 
-        //If the skill is the one being described right now, make the text white. If not make it black.
-        if (i == skillDescrActive) {
-            fill(255, 255, 255, 235);
-        } else { 
-            fill(35, 35, 35, 200);
-        }
-
-        tint(255, 195);
-        image(skillIconsNotActive[i], skillIconPosX[i], skillIconPosY[i], iconSize, iconSize);
-        text(skillDataTable.getString(i, "Skill Names"), skillIconPosX[i] + 25, skillIconPosY[i] + 16);
-        noTint();
-    } 
-
-    //Draw the icons and text for the active skills
-    for (int i = 0; i < skillsUnlocked; i++) {
-
-        //If the skill is the one being described right now, make the text white. If not make it black.
-        if (i == skillDescrActive) {
-            fill(255, 255, 255, 255);
-        } else { 
-            fill(0, 0, 0, 255);
-        }
-
-        image(skillIconsActive[i], skillIconPosX[i], skillIconPosY[i], iconSize, iconSize);
-        text(skillDataTable.getString(i, "Skill Names"), skillIconPosX[i] + 25, skillIconPosY[i] + 16);
-    } 
-
-
-    //Draw the Skill Description
-    fill(255, 255, 255, 255);
-    textFont(fontRoboto, 15);
-    text(skillDataTable.getString(skillDescrActive, "Skill Description"), skillBookPosX + 247, skillIconPosY[0], 183, 300);
-
-    //Draw the drawings, lol
-    tint(255, 220);
-    image(bookDrawing01, skillBookPosX + 30, skillBookPosY + 215);
-    //image(bookDrawing02, skillBookPosX + 240, skillBookPosY + 225);
-    noTint();
-
-    iconTimer = (millis() - iconTimerSaved)/1000;
-    
-  
-    //****************// Draw the top most BG layer //****************//
-
-    image(verytop, 0, 0);
-
-
-    //***********************************************************************************//
-    //****************// Draw the icon of the skill recently acquired //****************//
-    //***********************************************************************************//
-    
-    if (showIconAtAvatar == 1 && iconTimer <= iconAnimDuration) {
-        
-        //Calculate the coordinates of the bezier curved used for animating the icon
-        bezierX1 = activationPosX;
-        bezierY1 = activationPosY;
-        bezierX2 = skillIconPosX[lastUnlockedSkill];
-        bezierY2 = skillIconPosY[lastUnlockedSkill];
-        bezierXC1 = activationPosX;
-        bezierYC1 = activationPosY - 400;
-        bezierXC2 = skillIconPosX[lastUnlockedSkill];
-        bezierYC2 = skillIconPosY[lastUnlockedSkill] - 125;
-        
-        //Draw bezier that will be used for animating the skill icon
-        noFill();
-        noStroke();
-        bezierDetail(60);
-        bezier(bezierX1, bezierY1, bezierXC1, bezierYC1, bezierXC2, bezierYC2, bezierX2, bezierY2);
-
-
-        //Calculate the position on the bezier curve this frame
-        iconAnimPctDone = 1/iconAnimDuration*iconTimer;
-        iconAnimScale = 2 - 2*abs(0.5 - iconAnimPctDone);
-        animSkillIconPosX = int(bezierPoint(bezierX1, bezierXC1, bezierXC2, bezierX2, iconAnimPctDone));
-        animSkillIconPosY = int(bezierPoint(bezierY1, bezierYC1, bezierYC2, bezierY2, iconAnimPctDone));
-        
-        //Draw the icon at the position
-        image(skillIconsActive[lastUnlockedSkill], animSkillIconPosX, animSkillIconPosY, iconSize*iconAnimScale, iconSize*iconAnimScale);
-        
-        
-        int fadeIn = 255;
-
-        //if (iconTimer < iconAnimDuration*0.25) {
-        //    fadeIn = int(255*(1/iconAnimDuration*iconTimer*0.25));
-        //} else if (iconTimer > iconAnimDuration*0.75) {
-        //    fadeIn = int(255*(1/iconAnimDuration*iconTimer*0.25));
-        //}
-
-        tint(255,fadeIn);
-        fill(0, 0, 0, 145);
-        stroke(0, 200);
-        rect(avatarCurrentPosX + 20, avatarCurrentPosY, 80, 27);
-        textFont(fontRoboto, 18);
-        fill(255, 255, 255, fadeIn);
-        text("+1 Skill", avatarCurrentPosX + 30, avatarCurrentPosY + 20);
-        noTint();
-        
-    } else if (showIconAtAvatar == 1 && iconTimer > iconAnimDuration) {
-        showIconAtAvatar = 0;
-        skillsUnlocked++;
-        skillDescrActive = lastUnlockedSkill;
-    }
-
-
-
-    //***************// Draw the title of the damn game! //******************//
-
-    //textFont(fontKeepCalm, 48);
-    //fill(220,70,46, 210);
-    //1text("Journey of Medialogy", 85, 170);
-    titleImage.resize(650, 0);
-    image(titleImage, 70, 120);
-
-
-    //***************// Draw the Avatar Outline //******************//
-    imageMode(CENTER);
-    tint(255, 255*outlineTimer*2);
-    image(avatarImages[direction + 4], avatarCurrentPosX, avatarCurrentPosY, avatarSizeX, avatarSizeY);
-    imageMode(CORNER);
-    noTint();
-
-
-    //***************// End of Game Stuff //******************//
-
-    //Wins the game ... change mouseX to avatarCurrentPosX!!!!!!!
-    if (avatarCurrentPosX > 1358) { 
-
-        hideAvatar = 1;
-
-        direction=1;
-        if (score==0) {
-            confetti=1;
-            score=(millis()-time)/50;
-            countdown=millis();
-        }
-
-
-
-        fill(0, 0, 0, 100);
-        rect(0, 0, width, height);
-
-
-        //CONFETTI - should maybe be deleted?!
-        if (confetti>0) {
-            noStroke();
-
-            int linespace=1;
-            for (int i = 1; i < confetti; i = i+15) {
-                linespace++;
-                for (int j = 0; j < 1400; j = j+15) {
-                    fill(255, 0, 0);
-                    rect((linespace*20)+j, 20+i, 10, 10);
-                }
-                if (linespace>1)
-                    linespace=0;
+            //If the skill is the one being described right now, make the text white. If not make it black.
+            if (i == skillDescrActive) {
+                fill(255, 255, 255, 255);
+            } else { 
+                fill(35, 35, 35, 200);
             }
+
+            tint(255, 195);
+            image(skillIconsNotActive[i], skillIconPosX[i], skillIconPosY[i], iconSize, iconSize);
+            text(skillDataTable.getString(i, "Skill Names"), skillIconPosX[i] + 25, skillIconPosY[i] + 16);
+            noTint();
+        } 
+
+        //Draw the icons and text for the active skills
+        for (int i = 0; i < skillsUnlocked; i++) {
+
+            //If the skill is the one being described right now, make the text white. If not make it black.
+            if (i == skillDescrActive) {
+                fill(255, 255, 255, 255);
+            } else { 
+                fill(0, 0, 0, 255);
+            }
+
+            image(skillIconsActive[i], skillIconPosX[i], skillIconPosY[i], iconSize, iconSize);
+            text(skillDataTable.getString(i, "Skill Names"), skillIconPosX[i] + 25, skillIconPosY[i] + 16);
+        } 
+
+
+        //Draw the Skill Description
+        fill(0, 0, 0, 255);
+        textFont(fontRoboto, 15);
+        text(skillDataTable.getString(skillDescrActive, "Skill Description"), skillBookPosX + 247, skillIconPosY[0], 183, 300);
+
+        //Draw the sketches
+        tint(255, 220);
+
+        image(skillSketches[skillDescrActive], skillBookPosX + 250, skillBookPosY + 180, 160, 140);
+        noTint();
+
+        iconTimer = (millis() - iconTimerSaved)/1000;
+
+
+        //****************// Draw the top most BG layer //****************//
+
+        image(verytop, 0, 0);
+
+
+        //***************// Draw the title of the damn game! //******************//
+
+        if (gameState > 3) {
+            image(titleImage, 70, 120, 650, 86);
         }
-        confetti++;
-        //You won text!
-        textAlign(CENTER);
-        textSize(40);
-        fill(255, 255, 255);
-        text("CONGRATULATIONS!", width/2, height/2); 
-        textSize(20);
-        text("You have succesfully navigated Medialogy and completed with a score of "+score, width/2, height/2+40);
-        textAlign(LEFT);
-        if (millis()-countdown > 5000) {
-            //Reset
-            //resetting all the variables to the beginning ones
-            avatarCurrentPosX = avatarStartingPosX;
-            avatarCurrentPosY = avatarStartingPosY;
-            direction=2;
-            score=0;
-            avatarSelected=false;
-            currentZone=0;
-            skillsUnlocked = 0;
-            skillDescrActive = 0;
-            hideAvatar = 0;
+
+
+        //***********************************************************************************//
+        //****************// Draw the icon of the skill recently acquired //****************//
+        //***********************************************************************************//
+
+        if (showIconAtAvatar == 1 && iconTimer <= iconAnimDuration) {
+
+            //Calculate the coordinates of the bezier curved used for animating the icon
+            bezierX1 = activationPosX;
+            bezierY1 = activationPosY;
+            bezierX2 = skillIconPosX[lastUnlockedSkill];
+            bezierY2 = skillIconPosY[lastUnlockedSkill];
+            bezierXC1 = activationPosX;
+            bezierYC1 = activationPosY - 500;
+            bezierXC2 = skillIconPosX[lastUnlockedSkill];
+            bezierYC2 = skillIconPosY[lastUnlockedSkill] - 125;
+
+            //Draw bezier that will be used for animating the skill icon
+            noFill();
+            noStroke();
+            bezierDetail(60);
+            bezier(bezierX1, bezierY1, bezierXC1, bezierYC1, bezierXC2, bezierYC2, bezierX2, bezierY2);
+
+
+            //Calculate the position on the bezier curve this frame
+            iconAnimPctDone = 1/iconAnimDuration*iconTimer;
+            iconAnimScale = 5 - 8*abs(0.5 - iconAnimPctDone);
+            animSkillIconPosX = int(bezierPoint(bezierX1, bezierXC1, bezierXC2, bezierX2, iconAnimPctDone));
+            animSkillIconPosY = int(bezierPoint(bezierY1, bezierYC1, bezierYC2, bezierY2, iconAnimPctDone));
+
+            //Draw the icon at the position
+            image(skillIconsActive[lastUnlockedSkill], animSkillIconPosX, animSkillIconPosY, iconSize*iconAnimScale, iconSize*iconAnimScale);
+
+
+            int fadeIn = 255;
+
+            //if (iconTimer < iconAnimDuration*0.25) {
+            //    fadeIn = int(255*(1/iconAnimDuration*iconTimer*0.25));
+            //} else if (iconTimer > iconAnimDuration*0.75) {
+            //    fadeIn = int(255*(1/iconAnimDuration*iconTimer*0.25));
+            //}
+
+            tint(255, fadeIn);
+            fill(0, 0, 0, 145);
+            stroke(0, 200);
+            rect(avatarCurrentPosX + 20, avatarCurrentPosY, 80, 27);
+            textFont(fontRoboto, 18);
+            fill(255, 255, 255, fadeIn);
+            text("+1 Skill", avatarCurrentPosX + 30, avatarCurrentPosY + 20);
+            noTint();
+        } else if (showIconAtAvatar == 1 && iconTimer > iconAnimDuration) {
+            showIconAtAvatar = 0;
+
+            //Unlock the new skillm and switch to the description of it
+            skillsUnlocked++;
+            skillDescrActive = lastUnlockedSkill;
+        }
+
+
+        //***************// Draw the Avatar Outline //******************//
+        imageMode(CENTER);
+        tint(255, 255*outlineTimer*2);
+        image(avatarImages[direction + 4], avatarCurrentPosX, avatarCurrentPosY, avatarSizeX, avatarSizeY);
+        imageMode(CORNER);
+        noTint();
+
+
+        //***************// Draw other Game States //******************//
+
+
+
+        if (gameState == 3) {
+            splashFader = 255*(1 - 1/splashToGameDuration*gameStateTimer);
+            tint(255, splashFader);
+            image(lockScreenBG, 0, 0, width, height);
+            image(boatMan, boatManPosX, boatManPosY, 600, 467);
+            noTint();
+            image(titleImage, 70, 120, 650, 86);
+
+            // Draw the Finishing Screen
+        } else if (gameState >= 5) { 
+
+            pushMatrix();
+                fill(0, 0, 0, 145);
+                stroke(0, 200);
+                rectMode(CENTER);
+                rect(width/2, height/2, 750, 180);
+                noStroke();
+                rectMode(CORNER);
+            popMatrix();
+
+            //You won text!
+            textAlign(CENTER);
+            textSize(40);
+            fill(255, 255, 255);
+            text("CONGRATULATIONS!", width/2, height/2); 
+            textSize(20);
+            text("You have succesfully navigated Medialogy and completed with a score of "+score, width/2, height/2+40);
+            textAlign(LEFT);
+
+            //Fade to black at the end
+            if (gameState == 6) {
+                gameStateTimer = constrain(gameStateTimer, 0, finishToBlackDuration);
+                float fadeOut = 255 - 255*(1 - 1/finishToBlackDuration*gameStateTimer);
+                fill(0, 0, 0, fadeOut);
+                rect(0, 0, width, height);
+            } else if (gameState == 7) {
+                fill(0, 0, 0, 255);
+                rect(0, 0, width, height);
+            }
         }
     }
 }
@@ -623,42 +750,47 @@ void draw() {
 
 void mouseDragged() {
 
-    //If the mouse is within the bounding box of the avatar, while mousebutton is held down, the avatar is selected, and can be dragged
-    if (mouseX > avatarCurrentPosX - avatarSizeX/2 && mouseX < avatarCurrentPosX + avatarSizeX/2 && mouseY > avatarCurrentPosY - avatarSizeX/2 && mouseY < avatarCurrentPosY + avatarSizeX/2) {
-        avatarSelected = true;
+    if (gameState == 2) {
+
+        //If then mouse is dragging, while it's over the boat man, he's selected, and can be moved
+        if (boatManUnderMouse == true) {
+            boatManSelected = true;
+        }
+    } else if (gameState >= 3) {
+        //If the mouse is within the bounding box of the avatar, while mousebutton is held down, the avatar is selected, and can be dragged
+        if (mouseX > avatarCurrentPosX - avatarSizeX/2 && mouseX < avatarCurrentPosX + avatarSizeX/2 && mouseY > avatarCurrentPosY - avatarSizeX/2 && mouseY < avatarCurrentPosY + avatarSizeX/2) {
+            avatarSelected = true;
+        }
     }
 }
 
 void mouseReleased() {
 
     //The avatar is no longer selected
-    avatarSelected=false;
+    avatarSelected = false;
+    boatManSelected = false;
 }
 
 
 void mouseClicked() {
 
+    if (gameState == 4 || gameState == 5) {
+        //Check if one of the skills is clicked on
+        for (int i = 0; i < numberOfSkills; i++) {
 
-    //Check if one of the skills is clicked on
-    for (int i = 0; i < numberOfSkills; i++) {
+            //If the mouse is within the bounds of skill number "i", that should be set as the active skill description
+            if (mouseX > skillIconPosX[i] && mouseX < skillIconPosX[i] + 160 && mouseY > skillIconPosY[i] && mouseY < skillIconPosY[i] + iconSize) {
+                skillDescrActive = i;
+            }
+        } 
 
-        //If the mouse is within the bounds of skill number "i", that should be set as the active skill description
-        if (mouseX > skillIconPosX[i] && mouseX < skillIconPosX[i] + 160 && mouseY > skillIconPosY[i] && mouseY < skillIconPosY[i] + iconSize) {
-            skillDescrActive = i;
-        }
-    } 
-
-    if (avatarActivated == false) {
-        if (mouseX > avatarCurrentPosX - avatarSizeX/2 && mouseX < avatarCurrentPosX + avatarSizeX/2 && mouseY > avatarCurrentPosY - avatarSizeX/2 && mouseY < avatarCurrentPosY + avatarSizeX/2) {
-            avatarActivated = true;
+        if (avatarActivated == false) {
+            if (mouseX > avatarCurrentPosX - avatarSizeX/2 && mouseX < avatarCurrentPosX + avatarSizeX/2 && mouseY > avatarCurrentPosY - avatarSizeX/2 && mouseY < avatarCurrentPosY + avatarSizeX/2) {
+                avatarActivated = true;
+            }
         }
     }
 }
 
 
-
-//DESIRED EXTRAS
-
-//obstacles(depends on the time)
-//draw obstacles
-//animate obstacles
+//***************// End of Code //******************//
