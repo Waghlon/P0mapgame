@@ -31,18 +31,22 @@ float blackToSplashDuration, splashToGameDuration, finishScreenDuration, finishT
 PImage lockScreenBG, boatMan, boatManColorCode, unlockArrowImage;
 float boatManPosX, boatManPosY, boatManStartPosX, boatManStartPosY, splashFader;
 boolean boatManUnderMouse, boatManSelected;
-float arrowAnimTimer, arrowAnimTimerSavedr, arrowAnimCycle;
-int numberOfArrows, arrowStartPosX, arrowEndPosX, arrowTravelLength;
-int[] arrowPosX;
-float[] arrowOpacity;
+int numberOfArrows;
+float arrowStartPosX, arrowEndPosX, arrowTravelLength, spaceBetweenArrows, frameTimer;
+float[] arrowOpacity, arrowPosX;
 
 //************ Avatar Variables *************//
-int avatarSizeX, avatarSizeY, avatarCollisionBoxX, avatarCollisionBoxY, currentZone, direction, hideAvatar, showIconAtAvatar, lastUnlockedSkill;    //avatarCurrentPosX and avatarCurrentPosY represent characters coordinates, currentZone variable to determine which zone you are in 
+int avatarSizeX, avatarSizeY, avatarCollisionBoxX, avatarCollisionBoxY, currentZone, direction, hideAvatar, currentlyUnlockingSkill, lastUnlockedSkill;    //avatarCurrentPosX and avatarCurrentPosY represent characters coordinates, currentZone variable to determine which zone you are in 
 int avatarCurrentPosX, avatarCurrentPosY, avatarStartingPosX, avatarStartingPosY, avatarReset1PosX, avatarReset1PosY, avatarReset2PosX, avatarReset2PosY;
 boolean avatarSelected, avatarActivated;                        //avatarSelected to determine whether the character is being dragged
 PImage below, ontop, verytop, occludingLayer;                //images for below layer used to detect zones, and ontop and verytop for graphics
 PImage[] avatarImages;
 float directionTimer, directionTimerSaved, iconTimer, iconTimerSaved, outlineTimer;
+
+boolean drawArrowsAvatar, disableArrows;
+int numberOfAvatarArrows;
+float spaceBetweenAvatarArrows, avatarArrowStartPosX, avatarArrowTravelLength, avatarArrowEndPosX, avatarArrowFadeTimer, avatarArrowFadeTimerSaved;
+float[] avatarArrowPosX, avatarArrowOpacity ;
 
 //************ Zone Variables *************//
 int zoneTitleFontSize, zoneTextFontSize, numberOfZones;
@@ -122,29 +126,17 @@ void setup() {
     boatManPosX = boatManStartPosX;
     boatManPosY = boatManStartPosY;
     
-    arrowAnimCycle = 10;
-    numberOfArrows = 8;
+    numberOfArrows = 6;
+    spaceBetweenArrows = 80;
     arrowStartPosX = 500;
-    arrowTravelLength = numberOfArrows*75;
+    arrowTravelLength = numberOfArrows*spaceBetweenArrows;
     arrowEndPosX = arrowStartPosX + arrowTravelLength;
-    arrowTravelLength = arrowEndPosX - arrowStartPosX;
-    arrowPosX = new int[numberOfArrows];
+    arrowPosX = new float[numberOfArrows];
     arrowOpacity = new float[numberOfArrows];
     
-    //Set up the initial position and opacity of all the arrows
+    //Set up the initial position of all the arrows
     for ( int i = 0; i < numberOfArrows; i++) {
-        arrowPosX[i] = arrowStartPosX + 75*i;
-        
-        if ( arrowPosX[i] < arrowStartPosX + arrowTravelLength/2 ) { 
-            arrowOpacity[i] = constrain(2*(arrowPosX[i] - arrowStartPosX), 0, 255);
-        } else {
-            arrowOpacity[i] = constrain(2*(arrowEndPosX - arrowPosX[i]), 0, 255);
-        }
-    }
-    
-    //Set up the initial opacity of all the arrows
-    for ( int i = 0; i < numberOfArrows; i++) {
-        arrowOpacity[i] = constrain((arrowPosX[i] - arrowStartPosX), 0, 255);
+        arrowPosX[i] = arrowStartPosX + spaceBetweenArrows*i;
     }
 
 
@@ -154,12 +146,25 @@ void setup() {
     avatarCollisionBoxX = 16;
     avatarCollisionBoxY = 22;
     avatarStartingPosX = 80;
-    avatarStartingPosY = 870;
+    avatarStartingPosY = 865;
     avatarCurrentPosX = avatarStartingPosX;
     avatarCurrentPosY = avatarStartingPosY;
     direction=2;
     avatarSelected=false;
-
+    
+    //Avatar Arrows
+    numberOfAvatarArrows = 6;
+    spaceBetweenAvatarArrows = 20;
+    avatarArrowStartPosX = avatarStartingPosX - 20;
+    avatarArrowTravelLength = numberOfAvatarArrows*spaceBetweenAvatarArrows;
+    avatarArrowEndPosX = avatarArrowStartPosX + avatarArrowTravelLength;
+    avatarArrowPosX = new float[numberOfAvatarArrows];
+    avatarArrowOpacity = new float[numberOfAvatarArrows];
+    
+    //Set up the initial position of all the arrows
+    for ( int i = 0; i < numberOfAvatarArrows; i++) {
+        avatarArrowPosX[i] = avatarArrowStartPosX + spaceBetweenAvatarArrows*i;
+    }
 
     //*********// Load in background and foreground images //*********//    
     below = loadImage("backdrops/zonesColors.png");
@@ -289,8 +294,8 @@ void setup() {
 
 
     //*********// Obstacle 2 //*********//
-    obs2WaveDuration = 1.5;
-    obs2PauseLength = 1.5;
+    obs2WaveDuration = 1.2;
+    obs2PauseLength = 0.9;
     obs2Width=50;
     obs2Height=50;
     obs2StartingPosX = 1240; 
@@ -325,46 +330,41 @@ void draw() {
 
 
     gameStateTimer = (millis() - gameStateTimerSaved)/1000;
+    
+    //Game starts on a black
 
-    if (gameState == 0 && gameStateTimer > 2) {
+    if (gameState == 0 && gameStateTimer > 2) {                                   //Now start fading from black into the splash screen
         gameState = 1;
         gameStateTimerSaved = millis();
         gameStateTimer = 0;
-        println("Do Transition");
-    } else if (gameState == 1 && gameStateTimer > blackToSplashDuration) {
+    } else if (gameState == 1 && gameStateTimer > blackToSplashDuration) {        //Now done fading into the splash screen
         gameState = 2;
         gameStateTimerSaved = millis();
         gameStateTimer = 0;
-        println("Transition Done");
-    } else if (gameState == 2 && boatManPosX > 700) {
+    } else if (gameState == 2 && boatManPosX > 700) {                             //The user has slided the boat man enough to the right, and we now start the transition into the map
         gameState = 3;
         boatManSelected = false;
-        println("time to unlock bitch");
         gameStateTimerSaved = millis();
         gameStateTimer = 0;
-    } else if (gameState == 3 && gameStateTimer > splashToGameDuration) {
+    } else if (gameState == 3 && gameStateTimer > splashToGameDuration) {         //Transition into the map completed. Game is now activated.
         gameState = 4;
-        println("game fully unlocked bitch");
         gameStateTimerSaved = millis();
         gameStateTimer = 0;
-    } else if (gameState == 4 && avatarCurrentPosX > 1365) {
+    } else if (gameState == 4 && avatarCurrentPosX > 1365) {                      //The user has reached the end of the level. Display finishing screen.
         gameState = 5;
         hideAvatar = 1;
-        println("You have finished the game");
         score=millis()/50;
         gameStateTimerSaved = millis();
         gameStateTimer = 0;
-    } else if (gameState == 5 && gameStateTimer > finishScreenDuration ) {
+    } else if (gameState == 5 && gameStateTimer > finishScreenDuration ) {        //The finishing screen has now been displayed for the "finishScreenDuration". Start fading to black.
         gameState = 6;
-        println("game is shutting down");
         gameStateTimerSaved = millis();
         gameStateTimer = 0;
-    } else if (gameState == 6 && gameStateTimer > finishToBlackDuration) {
+    } else if (gameState == 6 && gameStateTimer > finishToBlackDuration) {        //Done fading to black. Now just show black screen for a duration.
         gameState = 7;
-        println("game is about to reset");
         gameStateTimerSaved = millis();
         gameStateTimer = 0;
-    } else if (gameState == 7 && gameStateTimer > endBlackScreenDuration) {
+    } else if (gameState == 7 && gameStateTimer > endBlackScreenDuration) {        //Game will now reset all values, and start from the beginning.
         avatarCurrentPosX = avatarStartingPosX;
         avatarCurrentPosY = avatarStartingPosY;
         direction=2;
@@ -376,8 +376,7 @@ void draw() {
         hideAvatar = 0;
         boatManPosX = boatManStartPosX;
         boatManPosY = boatManStartPosY;
-        println("game has reset");
-        gameState = 0;                            //The final reset switch
+        gameState = 0;                                                             //The final reset switch
     }
 
     //************************************************************//
@@ -405,21 +404,24 @@ void draw() {
         
         //Draw the arrows
         pushMatrix();
-            rotateX(0.4);
+            rotateX(0.5);
             
+                
             //Draw arrow, update their position and opacity for the next frame
             for ( int i = 0; i < numberOfArrows; i++) {
                 
                 tint(255, arrowOpacity[i]);
-                image(unlockArrowImage, arrowPosX[i], 695, 64, 64);
+                image(unlockArrowImage, arrowPosX[i], 710, 64, 64);
                 noTint();
-                arrowPosX[i] = arrowPosX[i] + 2;
+                
+
+                arrowPosX[i] = arrowPosX[i] + 1;
                 
                 //Update opacity
-                if ( arrowPosX[i] < arrowStartPosX + arrowTravelLength/2 ) { 
-                    arrowOpacity[i] = constrain(2*(arrowPosX[i] - arrowStartPosX), 0, 255);
+                if ( arrowPosX[i] < arrowStartPosX + arrowTravelLength/4 ) { 
+                    arrowOpacity[i] = constrain(3*(arrowPosX[i] - arrowStartPosX), 0, 255);
                 } else {
-                    arrowOpacity[i] = constrain(2*(arrowEndPosX - arrowPosX[i]), 0, 255);
+                    arrowOpacity[i] = constrain(0.75*(arrowEndPosX - arrowPosX[i]), 0, 255);
                 }
                 
                 //The arrows has reached the end, reset it
@@ -484,18 +486,18 @@ void draw() {
 
 
         //Unlock the next skill if you've entered a zone you haven't been in yet
-        if (skillsUnlocked < currentZone - 1 && skillsUnlocked < numberOfSkills && showIconAtAvatar == 0) {
+        if (skillsUnlocked < currentZone - 1 && skillsUnlocked < numberOfSkills && currentlyUnlockingSkill == 0) {
             int skillsSoonUnlocked = skillsUnlocked + 1;
             lastUnlockedSkill  = constrain(skillsSoonUnlocked - 1, 0, numberOfSkills - 1);
-            showIconAtAvatar = 1;
+            currentlyUnlockingSkill = 1;
             activationPosX = avatarCurrentPosX;
             activationPosY = avatarCurrentPosY;
             iconTimerSaved = millis();
         }
 
-        //************************************************************//
+        //********************************************************************//
         //************// Check if the Avatar is being Occluded  //************//
-        //************************************************************//
+        //********************************************************************//
 
         //Draw occluding testing layer
         image(occludingLayer, 0, 0);
@@ -513,8 +515,58 @@ void draw() {
         //************// Draw the main background image //************//
         //************************************************************//
         image(ontop, 0, 0);
+        
+        
+        //***************// Draw arrows at the Avatar  //******************//
+        
+        
+        
+        if ( avatarCurrentPosX == avatarStartingPosX && avatarCurrentPosY == avatarStartingPosY && avatarSelected == false) {
+            drawArrowsAvatar = true;
+        } else if (disableArrows == false) {
+            disableArrows = true;
+            avatarArrowFadeTimerSaved = millis();
+            println("derp");
+        }
+        
+        
+        
+        if (drawArrowsAvatar == true) {
+            
+            if (avatarArrowFadeTimerSaved != 0) {
+                avatarArrowFadeTimer = (millis() - avatarArrowFadeTimerSaved)/1000;
+            }
 
+            //Draw arrow, update their position and opacity for the next frame
+            for ( int i = 0; i < numberOfAvatarArrows; i++) {
+                
+            avatarArrowPosX[i] = avatarArrowPosX[i] + 0.6;
+                
+                //Update opacity
+                if ( avatarArrowPosX[i] < avatarArrowStartPosX + avatarArrowTravelLength/4 ) { 
+                    avatarArrowOpacity[i] = constrain(7*(avatarArrowPosX[i] - avatarArrowStartPosX), 0, 255)*(1 - avatarArrowFadeTimer);
+                } else {
+                    avatarArrowOpacity[i] = constrain(4*(avatarArrowEndPosX - avatarArrowPosX[i]), 0, 255)*(1 - avatarArrowFadeTimer);
+                }
+                
+                tint(255, avatarArrowOpacity[i]);
+                image(unlockArrowImage, avatarArrowPosX[i], avatarStartingPosY + 3, 16, 16);
+                noTint();
+                
+                //The arrows has reached the end, reset it
+                if ( avatarArrowPosX[i] > avatarArrowEndPosX ) {
+                    avatarArrowPosX[i] = avatarArrowStartPosX;
+                    avatarArrowOpacity[i] = 0;
+                }
+            }
+            
+            if (avatarArrowFadeTimer > 1) {
+                drawArrowsAvatar = false;
+            }
+            
+        }
 
+    
         //****************************************************************//
         //************// Draw the text for the current zone //************//
         //****************************************************************//
@@ -573,14 +625,15 @@ void draw() {
             imageMode(CORNER);
         }
 
+        //*****************************************************//
+        //****************// Construct Traps //****************//
+        //*****************************************************//
 
+        // Obstacle 1
 
-        //****************// Obstacle 1 //*****************************//
-
-        pencil.resize(int(obs1Width), int(obs1Height));
-        image(pencil, obs1PosX, obs1PosY);
-
-        obs1PosX=obs1PathPosX+sin(radians(millis())/5)*90; 
+        //Caclulate the position of Mr. Stabby  and draw him
+        obs1PosX  = obs1PathPosX+sin(radians(millis())/5)*90; 
+        image(pencil, obs1PosX, obs1PosY, obs1Width, obs1Height);
 
 
         if (avatarCurrentPosX >= obs1PosX - avatarCollisionBoxX/2 && avatarCurrentPosX <= obs1PosX + obs1Width + avatarCollisionBoxX/2 && avatarCurrentPosY + avatarCollisionBoxY/2 >= obs1PosY && avatarCurrentPosY - avatarCollisionBoxY/2 <= obs1PosY + obs1Height) {
@@ -589,35 +642,36 @@ void draw() {
             avatarCurrentPosY = avatarReset1PosY;
         }
 
-        //****************// Obstacle 2 //*****************************//
 
+        // Obstacle 2 
 
         obs2Timer = (millis() - obs2TimerSaved)/1000;
 
 
-        if (obs2Timer > obs2PauseLength/2 && obs2Timer < obs2WaveDuration + obs2PauseLength/2) {
+        if (obs2Timer < obs2WaveDuration) {
 
             //Draw the sound wave, and use the obs2WaveDuration to control how fast the wave animated
             tint(255, obs2Opacity);
             image(soundwaves, obs2CurrentPosX, obs2CurrentPosY, obs2Width*soundWaveScale, obs2Height*soundWaveScale);
             noTint();
             
-            float waveAnimPct = (obs2Timer - obs2PauseLength/2)/obs2WaveDuration;
+            //Interpolate between the start and end states, based on how far into the animation cycle we are.
+            float waveAnimPct = obs2Timer/obs2WaveDuration;
             obs2Opacity = lerp(0, 255, 1 - waveAnimPct); 
             obs2CurrentPosX = lerp(obs2StartingPosX, obs2StartingPosX + 50, waveAnimPct); 
             obs2CurrentPosY = lerp(obs2StartingPosY, obs2StartingPosY + 50, waveAnimPct); 
             soundWaveScale = lerp (0.25, 2, waveAnimPct); 
 
             //Check for collision
-            //Holy shit that's a long "if". Basically check to see if the avatar is within a box, that roughly corresponds to the sound wave, at a certain time.
-            if ( avatarCurrentPosX >= obs2StartingPosX + 20 && avatarCurrentPosX <= obs2StartingPosX + 110 && avatarCurrentPosY <= obs2StartingPosY + 200 && avatarCurrentPosY >= obs2StartingPosY + 40 && obs2Timer < obs2WaveDuration*0.75 + obs2PauseLength/2 && obs2Timer > obs2WaveDuration*0.15 + obs2PauseLength/2) {
+            //Holy shit that's a long "if". Basically check to see if the avatar is within a box, that roughly corresponds to the sound wave, within a certain time.
+            if ( avatarCurrentPosX >= obs2StartingPosX + 20 && avatarCurrentPosX <= obs2StartingPosX + 110 && avatarCurrentPosY <= obs2StartingPosY + 200 && avatarCurrentPosY >= obs2StartingPosY + 40 && obs2Timer > obs2WaveDuration*0.2 && obs2Timer < obs2WaveDuration*0.75  ) {
                 avatarSelected=false;
                 avatarCurrentPosX = avatarReset2PosX;
                 avatarCurrentPosY = avatarReset2PosY;
             }
 
-            //Reset the wave
-        } else if (obs2Timer > obs2PauseLength/2 + obs2WaveDuration) {
+        //Reset the soundwave
+        } else if (obs2Timer > obs2PauseLength + obs2WaveDuration) {
             obs2TimerSaved = millis();
             soundWaveScale = 0.25;
             obs2CurrentPosX = obs2StartingPosX;
@@ -640,7 +694,7 @@ void draw() {
         //Get ready for drawing the skills
         textFont(fontRoboto, bookFontSize);
         
-        //Set up positioning
+        //Set up positioning for icons and text
         imageMode(CENTER);
         rectMode(CENTER);
         textAlign(LEFT, CENTER);
@@ -659,7 +713,7 @@ void draw() {
                 fill(0, 0, 0, 255);
             }
 
-            //If i is higher than the number of skills unlocked, it is not unlocked yet, and the inactive icon is displayed
+            //If the current skill is higher than the number of skills unlocked, it is not unlocked yet, and the inactive icon is displayed
             if (i >= skillsUnlocked) {
                 tint(255, 195);
                 image(skillIconsNotActive[i], skillIconPosX[i], skillIconPosY[i], iconSize, iconSize);
@@ -684,12 +738,7 @@ void draw() {
         text(skillDataTable.getString(skillDescrActive, "Skill Description"), skillBookPosX + 247, skillIconPosY[0] - 15, 183, 300);
 
         //Draw the sketches
-        tint(255, 220);
-
         image(skillSketches[skillDescrActive], skillBookPosX + 250, skillBookPosY + 180, 160, 140);
-        noTint();
-
-        iconTimer = (millis() - iconTimerSaved)/1000;
 
 
         //******************************************************************//
@@ -710,7 +759,9 @@ void draw() {
         //****************// Draw the icon of the skill recently acquired //*****************//
         //***********************************************************************************//
 
-        if (showIconAtAvatar == 1 && iconTimer <= iconAnimDuration) {
+        iconTimer = (millis() - iconTimerSaved)/1000;
+        
+        if (currentlyUnlockingSkill == 1 && iconTimer <= iconAnimDuration) {
 
             //Calculate the coordinates of the bezier curved used for animating the icon
             bezierX1 = activationPosX;
@@ -757,12 +808,15 @@ void draw() {
             fill(255, 255, 255, fadeIn);
             text("+1 Skill", avatarCurrentPosX + 30, avatarCurrentPosY + 20);
             noTint();
-        } else if (showIconAtAvatar == 1 && iconTimer > iconAnimDuration) {
-            showIconAtAvatar = 0;
-
-            //Unlock the new skillm and switch to the description of it
+            
+        } else if (currentlyUnlockingSkill == 1 && iconTimer > iconAnimDuration) {
+           
+            //Unlock the new skill and switch to the description of it
             skillsUnlocked++;
             skillDescrActive = lastUnlockedSkill;
+            
+            //We are now done unlockin the new skill
+            currentlyUnlockingSkill = 0;
         }
 
 
@@ -787,7 +841,7 @@ void draw() {
             
         } else if (gameState >= 5) {                     // Draw the Finishing Screen, both in state 5, 6 and 7
         
-            fill(0, 0, 0, 145);
+            fill(0, 0, 0, 195);
             stroke(0, 200);
             rectMode(CENTER);
             rect(width/2, height/2, 750, 180);
