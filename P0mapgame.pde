@@ -376,6 +376,9 @@ void draw() {
         hideAvatar = 0;
         boatManPosX = boatManStartPosX;
         boatManPosY = boatManStartPosY;
+        drawArrowsAvatar = true;
+        disableArrows = false;
+        avatarArrowFadeTimer = 0;
         gameState = 0;                                                             //The final reset switch
     }
 
@@ -533,7 +536,7 @@ void draw() {
         
         if (drawArrowsAvatar == true) {
             
-            if (avatarArrowFadeTimerSaved != 0) {
+            if (disableArrows == true) {
                 avatarArrowFadeTimer = (millis() - avatarArrowFadeTimerSaved)/1000;
             }
 
