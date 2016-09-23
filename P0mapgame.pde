@@ -1,7 +1,7 @@
 /*
 ###########################################
  P0 project - Map game
- Revision: 20
+ Revision: 21
  Date: 22/09/2016
  By: group 13
  Rules for good coding
@@ -12,10 +12,8 @@
  5) Please be careful to use proper indentation
  6) Clearly mark different parts of the code
  
-Revision 20 notes
-Images implemented on both the zone text area, and the skillbook.
-Game state handler implemented.
-Lock/splash screen implemented.
+Revision 21 notes
+Arrows on the start screen implemented
  
  ###########################################
  */
@@ -27,12 +25,16 @@ Lock/splash screen implemented.
 //************ Game State Variables *************//
 int gameState;    //0 = Black Screen, 1 = Black Screen -> Splash Screen, 2 = Splash Screen, 3 = Splash Screen - > Game, 4 = Game is running, 5 = End of Game Screen, 6 = Game -> Black, 7 = Game over man, game over! What the fuck are we gonna do now? 
 float gameStateTimer, gameStateSavedTime;
+float blackToSplashDuration, splashToGameDuration, finishScreenDuration, finishToBlackDuration, endBlackScreenDuration;
 
 //************ Lock Screen Variables *************//
-PImage lockScreenBG, boatMan, boatManColorCode;
-float blackToSplashDuration, boatManPosX, boatManPosY, boatManStartPosX, boatManStartPosY, splashToGameDuration, finishScreenDuration, finishToBlackDuration, endBlackScreenDuration;
+PImage lockScreenBG, boatMan, boatManColorCode, unlockArrowImage;
+float boatManPosX, boatManPosY, boatManStartPosX, boatManStartPosY, splashFader;
 boolean boatManUnderMouse, boatManSelected;
-float splashFader;
+float arrowAnimTimer, arrowAnimSavedTimer, arrowAnimCycle;
+int numberOfArrows, arrowStartPosX, arrowEndPosX, arrowTravelLength;
+int[] arrowPosX;
+float[] arrowOpacity;
 
 //************ Avatar Variables *************//
 int avatarSizeX, avatarSizeY, avatarCollisionBoxX, avatarCollisionBoxY, currentZone, direction, hideAvatar, showIconAtAvatar, lastUnlockedSkill;    //avatarCurrentPosX and avatarCurrentPosY represent characters coordinates, currentZone variable to determine which zone you are in 
@@ -89,6 +91,7 @@ void setup() {
     //*********// General Setup //*********//
     size(1414, 1000, P3D);
     smooth(8);
+    //frameRate(240);
     hint(DISABLE_DEPTH_TEST);                            //Removed problems with overlapping text and images
     fontKeepCalm = loadFont("fonts/keepCalm.vlw");
     fontRoboto = loadFont("fonts/roboto.vlw");
@@ -112,11 +115,37 @@ void setup() {
     lockScreenBG = loadImage("lockscreen/lockScreenBG.png");
     boatMan = loadImage("lockscreen/boatMan.png");
     boatManColorCode = loadImage("lockscreen/boatManColorCode.png");
+    unlockArrowImage = loadImage("lockscreen/arrow.png");
 
     boatManStartPosX = 25;
     boatManStartPosY = 450;
     boatManPosX = boatManStartPosX;
     boatManPosY = boatManStartPosY;
+    
+    arrowAnimCycle = 10;
+    numberOfArrows = 8;
+    arrowStartPosX = 500;
+    arrowTravelLength = numberOfArrows*75;
+    arrowEndPosX = arrowStartPosX + arrowTravelLength;
+    arrowTravelLength = arrowEndPosX - arrowStartPosX;
+    arrowPosX = new int[numberOfArrows];
+    arrowOpacity = new float[numberOfArrows];
+    
+    //Set up the initial position and opacity of all the arrows
+    for ( int i = 0; i < numberOfArrows; i++) {
+        arrowPosX[i] = arrowStartPosX + 75*i;
+        
+        if ( arrowPosX[i] < arrowStartPosX + arrowTravelLength/2 ) { 
+            arrowOpacity[i] = constrain(2*(arrowPosX[i] - arrowStartPosX), 0, 255);
+        } else {
+            arrowOpacity[i] = constrain(2*(arrowEndPosX - arrowPosX[i]), 0, 255);
+        }
+    }
+    
+    //Set up the initial opacity of all the arrows
+    for ( int i = 0; i < numberOfArrows; i++) {
+        arrowOpacity[i] = constrain((arrowPosX[i] - arrowStartPosX), 0, 255);
+    }
 
 
     //*********// Avatar Variables //*********//
@@ -284,7 +313,7 @@ void setup() {
 
 
 //*********************************************************************************//
-//***********************// Start Drawing the Actual Game //***********************//
+//*******************************// Start Drawing //*******************************//
 //*********************************************************************************//
 
 
@@ -319,7 +348,7 @@ void draw() {
         println("game fully unlocked bitch");
         gameStateSavedTime = millis();
         gameStateTimer = 0;
-    } else if (gameState == 4 && avatarCurrentPosX > 1358) {
+    } else if (gameState == 4 && avatarCurrentPosX > 1365) {
         gameState = 5;
         hideAvatar = 1;
         println("You have finished the game");
@@ -358,58 +387,101 @@ void draw() {
 
     if (gameState == 0) {
         background(0, 0, 0);
-    } else if (gameState == 1) {
-        image(lockScreenBG, 0, 0, width, height);
-        image(boatMan, 25, 450, 600, 467);
-        image(titleImage, 70, 120, 650, 86);
-        color bgColor = color(0, 0, 0, 255*(1 - (gameStateTimer - 0.05)/blackToSplashDuration));
-        fill(bgColor);
-        rect(0, 0, width, height);
-    } else if (gameState == 2) {        //We're on the lock screen
-
-        image(lockScreenBG, 0, 0, width, height);
-
-        if (boatManSelected == true) {
-            boatManPosX = boatManPosX + mouseX - pmouseX;
-            boatManPosX = constrain(boatManPosX, 25, 800);
-        }
-
+    }
+    
+    if (gameState >= 1 && gameState < 4) {        //The game is on the lock screen
+        
+        //Draw the color code image, used to check if the mouse is over the boat man
         image(boatManColorCode, boatManPosX, boatManPosY, 600, 467);
-
+        
+        //Check if the mouse is over the boat man, so he can be selected
         if (get(mouseX, mouseY) == color(200, 50, 50)) {
             boatManUnderMouse = true;
         } else {
             boatManUnderMouse = false;
         }
-        
+    
+        //Draw the background image for the lock screen
         image(lockScreenBG, 0, 0, width, height);
+        
+        //Draw the arrows
+        pushMatrix();
+            rotateX(0.4);
+            
+            //Draw arrow, update their position and opacity for the next frame
+            for ( int i = 0; i < numberOfArrows; i++) {
+                
+                tint(255, arrowOpacity[i]);
+                image(unlockArrowImage, arrowPosX[i], 695, 64, 64);
+                noTint();
+                arrowPosX[i] = arrowPosX[i] + 2;
+                
+                //Update opacity
+                if ( arrowPosX[i] < arrowStartPosX + arrowTravelLength/2 ) { 
+                    arrowOpacity[i] = constrain(2*(arrowPosX[i] - arrowStartPosX), 0, 255);
+                } else {
+                    arrowOpacity[i] = constrain(2*(arrowEndPosX - arrowPosX[i]), 0, 255);
+                }
+                
+                //The arrows has reached the end, reset it
+                if ( arrowPosX[i] > arrowEndPosX ) {
+                    arrowPosX[i] = arrowStartPosX;
+                    arrowOpacity[i] = 0;
+                }
+            }
+    
+        popMatrix();
+    
+        if (gameState == 1) {       
+            
+            
+            image(boatMan, 25, 450, 600, 467);
+            image(titleImage, 70, 120, 650, 86);
+            color bgColor = color(0, 0, 0, 255*(1 - (gameStateTimer - 0.05)/blackToSplashDuration));
+            fill(bgColor);
+            rect(0, 0, width, height);
+        } else if (gameState == 2) {        //We're on the lock screen
+    
+            if (boatManSelected == true) {
+                boatManPosX = boatManPosX + mouseX - pmouseX;
+                boatManPosX = constrain(boatManPosX, 25, 800);
+            }
+            
         image(boatMan, boatManPosX, boatManPosY, 600, 467);
-        image(titleImage, 70, 120, 650, 86);
-    }  
 
+        }
+            
+        // Draw the title on top of everything
+        image(titleImage, 70, 120, 650, 86);
+        
+    }
+
+
+    //*********************************************************************************//
+    //***********************// Start Drawing the Actual Game //***********************//
+    //*********************************************************************************//
 
     if (gameState >= 3) {
 
-
-        //shape of the path
+        //Draw the path
         image(below, 0, 0);
 
         //************************************************************//
         //*************// Check the Avatar Positioning //*************//
         //************************************************************//
 
-        //if the below is white then it resets the ball
-        if (avatarSelected==true) {
+        
+        if (avatarSelected == true) {
 
+            //If the below is white then it resets the ball, if it's not, check which color is under the mouse cursor, and what zones that corresponds to
             if (get(mouseX, mouseY) == color(255, 255, 255)) {
                 avatarSelected = false;
-            }
+            } else {
 
-            //Check which color is under the mouse cursor, and what zones that corresponds to
-            for ( int i = 0; i < numberOfZones; i++) {
-                if (get(mouseX, mouseY) == zoneColorCodes[i]) {
-                    currentZone = i;
-                    //println("User is in area #" + i);
+                for ( int i = 0; i < numberOfZones; i++) {
+                    if (get(mouseX, mouseY) == zoneColorCodes[i]) {
+                        currentZone = i;
+                    }
                 }
             }
         }
@@ -536,7 +608,7 @@ void draw() {
             tint(255, obs2Opacity);
             image(soundwaves, obs2CurrentPosX, obs2CurrentPosY, obs2Width*soundWaveScale, obs2Height*soundWaveScale);
             noTint();
-            obs2Opacity -= 4.5/obs2WaveDuration;
+            obs2Opacity -= 7.5/obs2WaveDuration;
             obs2CurrentPosX += 1.8/obs2WaveDuration;
             obs2CurrentPosY += 0.5/obs2WaveDuration;
             soundWaveScale += 0.03/obs2WaveDuration;
