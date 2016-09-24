@@ -166,7 +166,7 @@ void setup() {
     }
 
     //*********// Load in background and foreground images //*********//    
-    below = loadImage("backdrops/zonesColors.png");
+    below = loadImage("backdrops/zoneColors.png");
     ontop = loadImage("backdrops/ontop.png");
     verytop = loadImage("backdrops/verytop.png");
     occludingLayer = loadImage("backdrops/occludingLayer.png");
