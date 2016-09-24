@@ -537,7 +537,6 @@ void draw() {
         } else if (disableArrows == false) {
             disableArrows = true;
             avatarArrowFadeTimerSaved = millis();
-            println("derp");
         }
         
         
