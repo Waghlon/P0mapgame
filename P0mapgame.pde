@@ -1,7 +1,7 @@
 /*
 ###########################################
  P0 project - Map game
- Revision: 21
+ Revision: 22 - Release Candidate
  Date: 22/09/2016
  By: group 13
  Rules for good coding
@@ -12,8 +12,11 @@
  5) Please be careful to use proper indentation
  6) Clearly mark different parts of the code
  
-Revision 21 notes
-Arrows on the start screen implemented
+Revision 22 notes
+Added ok button at the end screen that the user must click before the game resets.
+Added zone pictures.
+Lots of tweaks.
+
  
  ###########################################
  */
@@ -25,10 +28,11 @@ Arrows on the start screen implemented
 //************ Game State Variables *************//
 int gameState;    //0 = Black Screen, 1 = Black Screen -> Splash Screen, 2 = Splash Screen, 3 = Splash Screen - > Game, 4 = Game is running, 5 = End of Game Screen, 6 = Game -> Black, 7 = Game over man, game over! What the fuck are we gonna do now? 
 float gameStateTimer, gameStateTimerSaved;
-float blackToSplashDuration, splashToGameDuration, finishScreenDuration, finishToBlackDuration, endBlackScreenDuration;
+float blackToSplashDuration, splashToGameDuration, finishToBlackDuration, endBlackScreenDuration;
+boolean endButtonClicked;
 
 //************ Lock Screen Variables *************//
-PImage lockScreenBG, boatMan, boatManColorCode, unlockArrowImage;
+PImage lockScreenBG, lockPier, boatMan, boatManColorCode, unlockArrowImage;
 float boatManPosX, boatManPosY, boatManStartPosX, boatManStartPosY, splashFader;
 boolean boatManUnderMouse, boatManSelected;
 int numberOfArrows;
@@ -72,10 +76,7 @@ int animSkillIconPosX, animSkillIconPosY, activationPosX, activationPosY;
 int time, score, countdown, confetti;        //time, score, countdown and confetti are variables used for the ending
 
 //************ Fonts *************//
-PFont fontKeepCalm;
 PFont fontRoboto;
-PFont fontArchitect;
-PFont fontIgiari;
 
 //************ Title *************//
 PImage titleImage;
@@ -97,26 +98,24 @@ void setup() {
     smooth(4);
     //frameRate(240);
     hint(DISABLE_DEPTH_TEST);                            //Removed problems with overlapping text and images
-    fontKeepCalm = loadFont("fonts/keepCalm.vlw");
     fontRoboto = loadFont("fonts/roboto.vlw");
-    fontArchitect = loadFont("fonts/architect.vlw");
-    fontIgiari = loadFont("fonts/igiari.vlw");
+
+
 
 
     //*********// Game State Setup //*********//
-    blackToSplashDuration = 1;
-    splashToGameDuration = 1;
-    finishScreenDuration = 4;
+    blackToSplashDuration = 1.4;
+    splashToGameDuration = 0.7;
     finishToBlackDuration = 2;
     endBlackScreenDuration = 2;
-    
-    gameState = 0;
+    //gameState = 4;
     //gameStateTimerSaved = millis();
     //gameStateTimer = 0;
 
 
     //*********// Lock Screen Setup //*********//
-    lockScreenBG = loadImage("lockscreen/lockScreenBG.png");
+    lockScreenBG = loadImage("lockscreen/lockScreenBG.jpg");
+    lockPier = loadImage("lockscreen/lockPier.png");
     boatMan = loadImage("lockscreen/boatMan.png");
     boatManColorCode = loadImage("lockscreen/boatManColorCode.png");
     unlockArrowImage = loadImage("lockscreen/arrow.png");
@@ -126,9 +125,9 @@ void setup() {
     boatManPosX = boatManStartPosX;
     boatManPosY = boatManStartPosY;
     
-    numberOfArrows = 6;
-    spaceBetweenArrows = 80;
-    arrowStartPosX = 500;
+    numberOfArrows = 7;
+    spaceBetweenArrows = 75;
+    arrowStartPosX = 560;
     arrowTravelLength = numberOfArrows*spaceBetweenArrows;
     arrowEndPosX = arrowStartPosX + arrowTravelLength;
     arrowPosX = new float[numberOfArrows];
@@ -153,7 +152,7 @@ void setup() {
     avatarSelected=false;
     
     //Avatar Arrows
-    numberOfAvatarArrows = 6;
+    numberOfAvatarArrows = 5;
     spaceBetweenAvatarArrows = 20;
     avatarArrowStartPosX = avatarStartingPosX - 20;
     avatarArrowTravelLength = numberOfAvatarArrows*spaceBetweenAvatarArrows;
@@ -185,7 +184,7 @@ void setup() {
 
     //Load in zone images
     for ( int i = 0; i < numberOfZones; i++) {
-        zoneImages[i] = loadImage("photos/zoneImage" + i + ".png");
+        zoneImages[i] = loadImage("photos/zoneImage" + i + ".jpg");
     }
 
     //Assign the zones a color code
@@ -195,8 +194,8 @@ void setup() {
 
     //Font Settings
     zoneFontColor = color(25, 25, 25, 225);
-    zoneTextFont = fontRoboto;  //fontArchitect;
-    zoneTitleFontSize = 26;
+    zoneTextFont = fontRoboto;
+    zoneTitleFontSize = 32;
     zoneTextFontSize = 20;
 
     //Turn the underscores in the string file into /n, which equals line breaks when drawin the text. Putting the \n directly into the table didn't work for some reason.
@@ -306,14 +305,13 @@ void setup() {
     obs2Opacity = 255;
 
     //Avatar reset coordinates
-    avatarReset2PosX = 1200;
-    avatarReset2PosY = 880;
+    avatarReset2PosX = 1190;
+    avatarReset2PosY = 883;
 
     soundwaves = loadImage("obstacles/soundwaves.png");
 
-
-
-    println("Done with setup");
+    //Setup is done!
+    
 }
 
 
@@ -356,7 +354,7 @@ void draw() {
         score=millis()/50;
         gameStateTimerSaved = millis();
         gameStateTimer = 0;
-    } else if (gameState == 5 && gameStateTimer > finishScreenDuration ) {        //The finishing screen has now been displayed for the "finishScreenDuration". Start fading to black.
+    } else if (gameState == 5 && endButtonClicked == true ) {        //The user has clicked the end game button. Start fading to black.
         gameState = 6;
         gameStateTimerSaved = millis();
         gameStateTimer = 0;
@@ -367,9 +365,10 @@ void draw() {
     } else if (gameState == 7 && gameStateTimer > endBlackScreenDuration) {        //Game will now reset all values, and start from the beginning.
         avatarCurrentPosX = avatarStartingPosX;
         avatarCurrentPosY = avatarStartingPosY;
-        direction=2;
-        score=0;
-        avatarSelected=false;
+        direction = 2;
+        score = 0;
+        avatarSelected = false;
+        endButtonClicked = false;
         currentZone=0;
         skillsUnlocked = 0;
         skillDescrActive = 0;
@@ -414,7 +413,7 @@ void draw() {
             for ( int i = 0; i < numberOfArrows; i++) {
                 
                 tint(255, arrowOpacity[i]);
-                image(unlockArrowImage, arrowPosX[i], 710, 64, 64);
+                image(unlockArrowImage, arrowPosX[i], 718, 50, 50);
                 noTint();
                 
 
@@ -438,9 +437,13 @@ void draw() {
     
         if (gameState == 1) {       
             image(boatMan, boatManPosX, boatManPosY, 600, 467);
-            image(titleImage, 70, 120, 650, 86);
+            image(titleImage, 60, 100, 750, 88);
             color bgColor = color(0, 0, 0, 255*(1 - (gameStateTimer - 0.05)/blackToSplashDuration));
             fill(bgColor);
+            
+            //Draw the pier on top
+            image(lockPier, 0, 0, width, height);
+        
             rect(0, 0, width, height);
         } else if (gameState == 2) {        //We're on the lock screen, done with the transition
     
@@ -450,9 +453,14 @@ void draw() {
             }
             
             image(boatMan, boatManPosX, boatManPosY, 600, 467);
-            image(titleImage, 70, 120, 650, 86);
+            image(titleImage, 60, 100, 750, 88);
+            
+            //Draw the pier on top
+            image(lockPier, 0, 0, width, height);
 
         }
+        
+
     }
 
 
@@ -589,7 +597,12 @@ void draw() {
             text(zoneTextTable.getString(currentZone, "Text String 2"), 450, 465, 275, 250);
     
             //Draw the image in the bottom right quadrant
+            blendMode(SCREEN);
             image(zoneImages[currentZone], 725, 460, 180, 140);
+            blendMode(BLEND);
+            tint(255, 120);
+            //image(zoneImages[currentZone + 1], 725, 460, 180, 140);
+            noTint();
 
         popMatrix();
 
@@ -663,7 +676,7 @@ void draw() {
             obs2Opacity = lerp(0, 255, 1 - waveAnimPct); 
             obs2CurrentPosX = lerp(obs2StartingPosX, obs2StartingPosX + 50, waveAnimPct); 
             obs2CurrentPosY = lerp(obs2StartingPosY, obs2StartingPosY + 50, waveAnimPct); 
-            soundWaveScale = lerp (0.25, 2, waveAnimPct); 
+            soundWaveScale = lerp (0.5, 3, waveAnimPct); 
 
             //Check for collision
             //Holy shit that's a long "if". Basically check to see if the avatar is within a box, that roughly corresponds to the sound wave, within a certain time.
@@ -754,7 +767,7 @@ void draw() {
 
         //Draw the game title
         if (gameState > 3) {
-            image(titleImage, 70, 120, 650, 86);
+            image(titleImage, 60, 100, 750, 88);
         }
 
 
@@ -833,30 +846,47 @@ void draw() {
 
         //***************// Draw other Game States //******************//
 
-        if (gameState == 3) {                            // The game is transitioning from the splash screen to the map
+        if (gameState == 3) {                            // The game is transitioning from the splash screen to the map, so we need to draw lockscreen on top of the map
         
             splashFader = 255*(1 - 1/splashToGameDuration*gameStateTimer);
             tint(255, splashFader);
             image(lockScreenBG, 0, 0, width, height);
             image(boatMan, boatManPosX, boatManPosY, 600, 467);
+            image(lockPier, 0, 0, width, height);
             noTint();
-            image(titleImage, 70, 120, 650, 86);
+            image(titleImage, 60, 100, 750, 88);
             
         } else if (gameState >= 5) {                     // Draw the Finishing Screen, both in state 5, 6 and 7
         
-            fill(0, 0, 0, 195);
+            fill(0, 0, 0, 145);
             stroke(0, 200);
             rectMode(CENTER);
-            rect(width/2, height/2, 750, 180);
+            rect(width/2, height/4*3, 750, 180);
+            
+            //Ok button rectangle
+            
+            if (mouseX > width/2 - 50 && mouseX < width/2 + 50 && mouseY > height/4*3 + 110 && mouseY < height/4*3 + 170 && endButtonClicked == false) {
+                stroke(255, 255);
+            } else {
+                stroke(0, 200);
+            }
+            
+            rect(width/2, height/4*3 + 140, 100, 60);
+            fill(0, 0, 0, 145);
+            
+            
+            //You won text box
             noStroke();
             rectMode(CORNER);
-            //You won text!
             textAlign(CENTER);
             textSize(40);
             fill(255, 255, 255);
-            text("CONGRATULATIONS!", width/2, height/2); 
+            text("CONGRATULATIONS!", width/2, height/4*3 - 20); 
             textSize(20);
-            text("You have succesfully navigated Medialogy and completed with a score of "+score, width/2, height/2+40);
+            text("You have succesfully completed Medialogy and achieved a score of " + score + ".\n Pres OK to end the game, or have a look at the skills you have acquired.", width/2, height/4*3 + 20);
+            textSize(30);
+            text("OK", width/2, height/4*3 + 150);
+            
             textAlign(LEFT);
 
             //Now fade to black
@@ -913,6 +943,14 @@ void mouseClicked() {
         if (avatarActivated == false) {
             if (mouseX > avatarCurrentPosX - avatarSizeX/2 && mouseX < avatarCurrentPosX + avatarSizeX/2 && mouseY > avatarCurrentPosY - avatarSizeX/2 && mouseY < avatarCurrentPosY + avatarSizeX/2) {
                 avatarActivated = true;
+            }
+        }
+        
+        //Check to see of the user has clicked the OK end game button
+        if ( gameState == 5 && endButtonClicked == false) {
+            if (mouseX > width/2 - 50 && mouseX < width/2 + 50 && mouseY > height/4*3 + 110 && mouseY < height/4*3 + 170) {
+                endButtonClicked = true;
+                println("button clicked");
             }
         }
     }
