@@ -101,8 +101,6 @@ void setup() {
     fontRoboto = loadFont("fonts/roboto.vlw");
 
 
-
-
     //*********// Game State Setup //*********//
     blackToSplashDuration = 1.4;
     splashToGameDuration = 0.7;
@@ -137,7 +135,6 @@ void setup() {
     for ( int i = 0; i < numberOfArrows; i++) {
         arrowPosX[i] = arrowStartPosX + spaceBetweenArrows*i;
     }
-
 
     //*********// Avatar Variables //*********//
     avatarSizeX = 35;
@@ -176,20 +173,21 @@ void setup() {
 
     //Load in the table holding the data for all zones. 
     zoneTextTable = loadTable("strings/zoneData.txt", "header, tsv");
+    
     //Each row contains title and text for each zone, so the number of rows equals number of zones.
     numberOfZones = zoneTextTable.getRowCount();
-
+    
     zoneColorCodes = new color[numberOfZones];
     zoneImages = new PImage[numberOfZones];
+    
+    //Assign the zones a color code
+    for ( int i = 0; i < numberOfZones; i++) {
+        zoneColorCodes[i] = color(15*(i + 1), 15*(i + 1), 15*(i + 1));
+    }
 
     //Load in zone images
     for ( int i = 0; i < numberOfZones; i++) {
         zoneImages[i] = loadImage("photos/zoneImage" + i + ".jpg");
-    }
-
-    //Assign the zones a color code
-    for ( int i = 0; i < numberOfZones; i++) {
-        zoneColorCodes[i] = color(15*(i + 1), 15*(i + 1), 15*(i + 1));
     }
 
     //Font Settings
@@ -593,7 +591,7 @@ void draw() {
     
             //Draw the zone text in two textboxes.
             text(zoneTextTable.getString(currentZone, "Text String 1"), 450, 340, 460, 120);
-            text(zoneTextTable.getString(currentZone, "Text String 2"), 450, 465, 275, 250);
+            text(zoneTextTable.getString(currentZone, "Text String 2"), 450, 467, 275, 250);
     
             //Draw the image in the bottom right quadrant
             blendMode(SCREEN);
@@ -911,11 +909,14 @@ void mouseDragged() {
         if (boatManUnderMouse == true) {
             boatManSelected = true;
         }
+        
     } else if (gameState >= 3) {
+        
         //If the mouse is within the bounding box of the avatar, while mousebutton is held down, the avatar is selected, and can be dragged
         if (mouseX > avatarCurrentPosX - avatarSizeX/2 && mouseX < avatarCurrentPosX + avatarSizeX/2 && mouseY > avatarCurrentPosY - avatarSizeX/2 && mouseY < avatarCurrentPosY + avatarSizeX/2) {
             avatarSelected = true;
         }
+        
     }
 }
 
@@ -934,7 +935,7 @@ void mouseClicked() {
         for (int i = 0; i < numberOfSkills; i++) {
 
             //If the mouse is within the bounds of skill number "i", that should be set as the active skill description
-            if (mouseX > skillIconPosX[i] && mouseX < skillIconPosX[i] + 160 && mouseY > skillIconPosY[i] - iconSize/2 && mouseY < skillIconPosY[i] + iconSize/2) {
+            if (mouseX > skillIconPosX[i] - 20 && mouseX < skillIconPosX[i] + 180 && mouseY > skillIconPosY[i] - iconSize/2 && mouseY < skillIconPosY[i] + iconSize/2) {
                 skillDescrActive = i;
             }
         } 
@@ -949,7 +950,6 @@ void mouseClicked() {
         if ( gameState == 5 && endButtonClicked == false) {
             if (mouseX > width/2 - 50 && mouseX < width/2 + 50 && mouseY > height/4*3 + 110 && mouseY < height/4*3 + 170) {
                 endButtonClicked = true;
-                println("button clicked");
             }
         }
     }
