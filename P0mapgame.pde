@@ -29,7 +29,6 @@ Lots of tweaks.
 int gameState;    //0 = Black Screen, 1 = Black Screen -> Splash Screen, 2 = Splash Screen, 3 = Splash Screen - > Game, 4 = Game is running, 5 = End of Game Screen, 6 = Game -> Black, 7 = Game over man, game over! What the fuck are we gonna do now? 
 float gameStateTimer, gameStateTimerSaved;
 float blackToSplashDuration, splashToGameDuration, finishToBlackDuration, endBlackScreenDuration;
-boolean endButtonClicked;
 
 //************ Lock Screen Variables *************//
 PImage lockScreenBG, lockPier, boatMan, boatManColorCode, unlockArrowImage;
@@ -42,8 +41,8 @@ float[] arrowOpacity, arrowPosX;
 //************ Avatar Variables *************//
 int avatarSizeX, avatarSizeY, avatarCollisionBoxX, avatarCollisionBoxY, currentZone, direction, hideAvatar, currentlyUnlockingSkill, lastUnlockedSkill;    //avatarCurrentPosX and avatarCurrentPosY represent characters coordinates, currentZone variable to determine which zone you are in 
 int avatarCurrentPosX, avatarCurrentPosY, avatarStartingPosX, avatarStartingPosY, avatarReset1PosX, avatarReset1PosY, avatarReset2PosX, avatarReset2PosY;
-boolean avatarSelected, avatarActivated;                        //avatarSelected to determine whether the character is being dragged
-PImage below, ontop, verytop, occludingLayer;                //images for below layer used to detect zones, and ontop and verytop for graphics
+boolean avatarSelected;                        //avatarSelected to determine whether the character is being dragged
+PImage colorCodeLayer, ontop, verytop, occludingLayer;                //images for below layer used to detect zones, and ontop and verytop for graphics
 PImage[] avatarImages;
 float directionTimer, directionTimerSaved, iconTimer, iconTimerSaved, outlineTimer;
 
@@ -163,7 +162,7 @@ void setup() {
     }
 
     //*********// Load in background and foreground images //*********//    
-    below = loadImage("backdrops/zoneColors.png");
+    colorCodeLayer = loadImage("backdrops/zoneColors.png");
     ontop = loadImage("backdrops/ontop.png");
     verytop = loadImage("backdrops/verytop.png");
     occludingLayer = loadImage("backdrops/occludingLayer.png");
@@ -174,18 +173,17 @@ void setup() {
     //Load in the table holding the data for all zones. 
     zoneTextTable = loadTable("strings/zoneData.txt", "header, tsv");
     
-    //Each row contains title and text for each zone, so the number of rows equals number of zones.
+    //Each row contains the title and text for a zone, so the number of rows equals number of zones.
     numberOfZones = zoneTextTable.getRowCount();
     
-    zoneColorCodes = new color[numberOfZones];
-    zoneImages = new PImage[numberOfZones];
-    
     //Assign the zones a color code
+    zoneColorCodes = new color[numberOfZones];
     for ( int i = 0; i < numberOfZones; i++) {
-        zoneColorCodes[i] = color(15*(i + 1), 15*(i + 1), 15*(i + 1));
+        zoneColorCodes[i] = color(15 + 15*i, 15 + 15*i, 15 + 15*i);
     }
 
     //Load in zone images
+    zoneImages = new PImage[numberOfZones];
     for ( int i = 0; i < numberOfZones; i++) {
         zoneImages[i] = loadImage("photos/zoneImage" + i + ".jpg");
     }
@@ -258,7 +256,7 @@ void setup() {
 
     //*********// Animated Skill Icon Settings //*********//
 
-    iconAnimDuration = 1.5;
+    iconAnimDuration = 1.2;
 
     //*********// Load in Avatar images //*********//
     avatarImages = new PImage[8];
@@ -342,17 +340,19 @@ void draw() {
         boatManSelected = false;
         gameStateTimerSaved = millis();
         gameStateTimer = 0;
+        cursor(ARROW);
     } else if (gameState == 3 && gameStateTimer > splashToGameDuration) {         //Transition into the map completed. Game is now activated.
         gameState = 4;
         gameStateTimerSaved = millis();
         gameStateTimer = 0;
+        cursor(ARROW);
     } else if (gameState == 4 && avatarCurrentPosX > 1365) {                      //The user has reached the end of the level. Display finishing screen.
         gameState = 5;
         hideAvatar = 1;
         score=millis()/50;
         gameStateTimerSaved = millis();
         gameStateTimer = 0;
-    } else if (gameState == 5 && endButtonClicked == true ) {        //The user has clicked the end game button. Start fading to black.
+    } else if (gameState == 5 && gameStateTimer > 7) {                            //Start fading to black after 7 seconds.            
         gameState = 6;
         gameStateTimerSaved = millis();
         gameStateTimer = 0;
@@ -366,7 +366,6 @@ void draw() {
         direction = 2;
         score = 0;
         avatarSelected = false;
-        endButtonClicked = false;
         currentZone=0;
         skillsUnlocked = 0;
         skillDescrActive = 0;
@@ -395,8 +394,10 @@ void draw() {
         //Check if the mouse is over the boat man, so he can be selected
         if (get(mouseX, mouseY) == color(200, 50, 50)) {
             boatManUnderMouse = true;
+            cursor(HAND);
         } else {
             boatManUnderMouse = false;
+            cursor(ARROW);
         }
     
         //Draw the background image for the lock screen
@@ -469,26 +470,24 @@ void draw() {
     if (gameState >= 3 && gameState <= 6) {
 
         //Draw the path
-        image(below, 0, 0);
+        image(colorCodeLayer, 0, 0);
 
         //************************************************************//
         //*************// Check the Avatar Positioning //*************//
         //************************************************************//
-
         
         if (avatarSelected == true) {
             
             color colorUnderMouse = get(mouseX, mouseY);
 
-            //If the below is white then user loses control of the avatar. Otherwise, check which color is under the mouse cursor, and what zones that corresponds to.
+            //If the color below the mouse is white lose control of the avatar. 
             if (colorUnderMouse == color(255, 255, 255)) {
                 avatarSelected = false;
-            } else {
-
+            } else {  // Otherwise, check which zone the color corresponds to.              
                 for ( int i = 0; i < numberOfZones; i++) {
                     if (get(mouseX, mouseY) == zoneColorCodes[i]) {
                         currentZone = i;
-                    }
+                    }                  
                 }
             }
         }
@@ -858,20 +857,8 @@ void draw() {
             fill(0, 0, 0, 145);
             stroke(0, 200);
             rectMode(CENTER);
-            rect(width/2, height/4*3, 750, 180);
-            
-            //Ok button rectangle
-            
-            if (mouseX > width/2 - 50 && mouseX < width/2 + 50 && mouseY > height/4*3 + 110 && mouseY < height/4*3 + 170 && endButtonClicked == false) {
-                stroke(255, 255);
-            } else {
-                stroke(0, 200);
-            }
-            
-            rect(width/2, height/4*3 + 140, 100, 60);
-            fill(0, 0, 0, 145);
-            
-            
+            rect(width/2, height/4*3, 750, 160);
+                        
             //You won text box
             noStroke();
             rectMode(CORNER);
@@ -880,9 +867,9 @@ void draw() {
             fill(255, 255, 255);
             text("CONGRATULATIONS!", width/2, height/4*3 - 20); 
             textSize(20);
-            text("You have succesfully completed Medialogy and achieved a score of " + score + ".\n Pres OK to end the game, or have a look at the skills you have acquired.", width/2, height/4*3 + 20);
+            text("You have succesfully completed The Journey of Medialogy with a score of " + score + ".\nThe game will now reset.", width/2, height/4*3 + 20);
             textSize(30);
-            text("OK", width/2, height/4*3 + 150);
+            //text("OK", width/2, height/4*3 + 150);
             
             textAlign(LEFT);
 
@@ -922,7 +909,7 @@ void mouseDragged() {
 
 void mouseReleased() {
 
-    //The avatar is no longer selected
+    //The avatar or the boat man is no longer selected
     avatarSelected = false;
     boatManSelected = false;
 }
@@ -939,19 +926,6 @@ void mouseClicked() {
                 skillDescrActive = i;
             }
         } 
-
-        if (avatarActivated == false) {
-            if (mouseX > avatarCurrentPosX - avatarSizeX/2 && mouseX < avatarCurrentPosX + avatarSizeX/2 && mouseY > avatarCurrentPosY - avatarSizeX/2 && mouseY < avatarCurrentPosY + avatarSizeX/2) {
-                avatarActivated = true;
-            }
-        }
-        
-        //Check to see of the user has clicked the OK end game button
-        if ( gameState == 5 && endButtonClicked == false) {
-            if (mouseX > width/2 - 50 && mouseX < width/2 + 50 && mouseY > height/4*3 + 110 && mouseY < height/4*3 + 170) {
-                endButtonClicked = true;
-            }
-        }
     }
 }
 
