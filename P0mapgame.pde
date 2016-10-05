@@ -93,7 +93,8 @@ float obs2Timer, obs2TimerSaved, obs2WaveDuration, obs2PauseLength, obs2Opacity,
 void setup() {
 
     //*********// General Setup //*********//
-    size(1414, 1000, P3D);
+    //size(1414, 1000, P3D);
+    fullScreen(P3D);
     smooth(4);
     //frameRate(240);
     hint(DISABLE_DEPTH_TEST);                            //Removed problems with overlapping text and images
@@ -144,8 +145,8 @@ void setup() {
     avatarStartingPosY = 865;
     avatarCurrentPosX = avatarStartingPosX;
     avatarCurrentPosY = avatarStartingPosY;
-    direction=2;
-    avatarSelected=false;
+    direction = 2;
+    avatarSelected = false;
     
     //Avatar Arrows
     numberOfAvatarArrows = 5;
@@ -194,9 +195,9 @@ void setup() {
     zoneTitleFontSize = 32;
     zoneTextFontSize = 20;
 
-    //Turn the underscores in the string file into /n, which equals line breaks when drawin the text. Putting the \n directly into the table didn't work for some reason.
+    //Turn the underscores in the string file into \n, which equals line breaks when drawin the text. Putting the \n directly into the table didn't work for some reason.
     for (int i = 0; i < numberOfZones; i++) {
-        //load in the string from each row, replace the underscores with /n, then put it back into the table with setString
+        //load in the string from each row, replace the underscores with \n, then put it back into the table with setString
         String string1WithoutSpaces = zoneTextTable.getString(i, 1).replaceAll("_", "\n");
         zoneTextTable.setString(i, 1, string1WithoutSpaces);
         String string2WithoutSpaces = zoneTextTable.getString(i, 2).replaceAll("_", "\n");
@@ -222,9 +223,9 @@ void setup() {
     spaceBetweenSkills = 32;
     bookFontSize = 19;  
 
-    //Turn the underscores in the string file into /n, which equals line breaks when drawin the text. Putting the \n directly into the table didn't work for some reason.
+    //Turn the underscores in the string file into \n, which equals line breaks when drawin the text. Putting the \n directly into the table didn't work for some reason.
     for (int i = 0; i < numberOfSkills; i++) {
-        //load in the string from each row, replace the underscores with /n, put it back into the table
+        //load in the string from each row, replace the underscores with \n, put it back into the table
         String stringWithoutSpaces = skillDataTable.getString(i, 1).replaceAll("_", "\n");
         skillDataTable.setString(i, 1, stringWithoutSpaces);
     }
@@ -276,10 +277,10 @@ void setup() {
     //*********// Obstacle 1 //*********//
     obsReturn=false;
     obs1Width = 80;
-    obs1Height=20;
-    obs1PosX=230;
-    obs1PosY=600;
-    obs1PathPosX=170;
+    obs1Height = 20;
+    obs1PosX = 230;
+    obs1PosY = 600;
+    obs1PathPosX = 170;
 
     //Avatar reset coordinates
     avatarReset1PosX = 192;
@@ -291,8 +292,8 @@ void setup() {
     //*********// Obstacle 2 //*********//
     obs2WaveDuration = 1.2;
     obs2PauseLength = 0.9;
-    obs2Width=50;
-    obs2Height=50;
+    obs2Width = 50;
+    obs2Height = 50;
     obs2StartingPosX = 1240; 
     obs2StartingPosY = 790;
     obs2CurrentPosX = obs2StartingPosX;
@@ -647,7 +648,7 @@ void draw() {
         obs1PosX  = obs1PathPosX+sin(radians(millis())/5)*90; 
         image(pencil, obs1PosX, obs1PosY, obs1Width, obs1Height);
 
-
+        //Check for collision. If the avatar collides with the obstacle, reset him
         if (avatarCurrentPosX >= obs1PosX - avatarCollisionBoxX/2 && avatarCurrentPosX <= obs1PosX + obs1Width + avatarCollisionBoxX/2 && avatarCurrentPosY + avatarCollisionBoxY/2 >= obs1PosY && avatarCurrentPosY - avatarCollisionBoxY/2 <= obs1PosY + obs1Height) {
             avatarSelected=false;
             avatarCurrentPosX = avatarReset1PosX;
